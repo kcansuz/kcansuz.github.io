@@ -26,11 +26,20 @@
   .wrapgrid{position:relative}
   .wrapgrid .overlay{border-radius:12px}
 </style>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="ortak.css">
+<style>.layout .main{max-width:520px}</style>
 </head>
 <body>
-<header><div class="bar"><a href="index.html#oyunlar" class="back">← Ana sayfa</a><span class="logo">oyun<span>_2048</span></span></div></header>
+<header>
+  <div class="bar">
+    <a href="index.html" class="brand" aria-label="Ana sayfa"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 4h7v32H8z" fill="#b6f36a"/><path d="M15 21 29 4h8L22.5 21 37 36h-8.5z" fill="#b6f36a"/></svg><span>KADIRHAN CANSUZ</span></a>
+    <a href="index.html#oyunlar" class="back">← Tüm oyunlar</a>
+  </div>
+</header>
 
-<div class="game">
+<div class="game layout">
+<div class="main">
   <div class="player" id="player"></div>
   <div class="hud">
     <div>PUAN <b id="score">0</b></div>
@@ -59,7 +68,10 @@
   </div>
   <div class="row-btns"><button class="btn ghost" id="newBtn" type="button">↺ Yeni oyun</button></div>
   <p class="help">Kaydırmak için <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ya da parmağını kaydır</p>
+</div>
+<aside class="side">
   <section class="board"><h2>🏆 Skor tablosu <small id="boardNote"></small></h2><ol id="scoreList"></ol></section>
+</aside>
 </div>
 
 <script src="skor.js"></script>
