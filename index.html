@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kcansuz | Endüstriyel Otomasyon</title>
+<meta name="description" content="Endüstriyel otomasyon, robotik kaynak ve PLC programlama.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --line:#2a313c;
+    --text:#e6edf3; --muted:#8b949e; --accent:#f5a524; --accent2:#2ea043;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.6}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+
+  /* Üst menü */
+  header{position:sticky;top:0;background:rgba(13,17,23,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:10}
+  nav{display:flex;justify-content:space-between;align-items:center;height:64px}
+  .logo{font-family:'JetBrains Mono',monospace;font-size:1.1rem}
+  .logo span{color:var(--accent)}
+  .menu{display:flex;gap:22px;font-size:.95rem;color:var(--muted)}
+  .menu a:hover{color:var(--text)}
+
+  /* Giriş */
+  .hero{padding:90px 0 70px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:40px 40px;opacity:.25;mask-image:radial-gradient(ellipse at top,#000 30%,transparent 75%)}
+  .hero .wrap{position:relative}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.8rem;
+    color:var(--accent2);border:1px solid var(--line);padding:6px 12px;border-radius:20px;background:var(--panel)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:blink 1.6s infinite}
+  @keyframes blink{50%{opacity:.25}}
+  h1{font-size:clamp(2.2rem,6vw,3.6rem);font-weight:800;line-height:1.1;margin:22px 0 18px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lead{color:var(--muted);font-size:1.1rem;max-width:600px}
+  .btns{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
+  .btn{padding:12px 22px;border-radius:8px;font-weight:600;border:1px solid var(--line)}
+  .btn.primary{background:var(--accent);color:#111;border-color:var(--accent)}
+  .btn:hover{filter:brightness(1.1)}
+
+  /* Bölümler */
+  section{padding:70px 0;border-top:1px solid var(--line)}
+  h2{font-size:2rem;margin:0 0 30px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;transition:.2s}
+  .card:hover{border-color:var(--accent);transform:translateY(-3px)}
+  .icon{font-size:1.8rem;margin-bottom:12px}
+  .card h3{font-size:1.1rem;margin-bottom:8px}
+  .card p{color:var(--muted);font-size:.95rem}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-top:10px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;text-align:center}
+  .stat b{display:block;font-size:2rem;color:var(--accent);font-family:'JetBrains Mono',monospace}
+  .stat span{color:var(--muted);font-size:.9rem}
+
+  .contact a.card{display:flex;align-items:center;gap:14px}
+  .contact .icon{margin:0}
+  .contact small{display:block;color:var(--muted)}
+
+  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:.85rem;text-align:center}
+
+  @media (max-width:640px){
+    .menu{display:none}
+    .hero{padding:60px 0 50px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a href="#" class="logo">k<span>cansuz</span>_</a>
+    <div class="menu">
+      <a href="#hizmetler">Hizmetler</a>
+      <a href="#projeler">Projeler</a>
+      <a href="#oyunlar">Oyunlar</a>
+      <a href="#iletisim">İletişim</a>
+    </div>
+  </nav>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="status"><span class="dot"></span> SYSTEM ONLINE</div>
+    <h1>Makineleri <em>akıllı</em><br>hale getiriyoruz.</h1>
+    <p class="lead">Endüstriyel otomasyon, robotik kaynak hücreleri ve PLC programlama. Fikirden devreye almaya kadar.</p>
+    <div class="btns">
+      <a href="#iletisim" class="btn primary">İletişime Geç</a>
+      <a href="#hizmetler" class="btn">Neler Yapıyoruz?</a>
+    </div>
+  </div>
+</div>
+
+<section id="hizmetler">
+  <div class="wrap">
+    <h2>Neler yapıyoruz?</h2>
+    <div class="grid">
+      <div class="card"><div class="icon">⚙️</div><h3>PLC Programlama</h3><p>Schneider Modicon ve diğer PLC'ler için yazılım, revizyon ve arıza giderme.</p></div>
+      <div class="card"><div class="icon">🤖</div><h3>Robotik Kaynak</h3><p>Robot kaynak hücrelerinin kurulumu, programlanması ve devreye alınması.</p></div>
+      <div class="card"><div class="icon">📊</div><h3>İzleme Sistemleri</h3><p>Makinelerinizi ve kameralarınızı tek ekrandan, telefondan takip edin.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="projeler">
+  <div class="wrap">
+    <h2>Rakamlarla</h2>
+    <div class="stats">
+      <div class="stat"><b>00</b><span>Tamamlanan proje</span></div>
+      <div class="stat"><b>00</b><span>Devreye alınan robot</span></div>
+      <div class="stat"><b>00</b><span>Yıllık tecrübe</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="oyunlar">
+  <div class="wrap">
+    <h2>Mola zamanı</h2>
+    <div class="grid">
+      <a class="card" href="kaynak.html"><div class="icon">🔥</div><h3>Robot Kaynak</h3><p>Bant üzerindeki parçaları doğru anda kaynakla, komboyu yakala, rekoru kır.</p></a>
+      <a class="card" href="plc.html"><div class="icon">🧩</div><h3>PLC Mantık Bulmacası</h3><p>AND, OR, NOT, XOR kapılarıyla devreyi kur, motoru çalıştır. 8 seviye.</p></a>
+      <a class="card" href="yilan.html"><div class="icon">🐍</div><h3>Yılan</h3><p>Klasik yılan oyunu. Ye, büyü, kuyruğunu ısırma; büyüdükçe hızlanır.</p></a>
+      <a class="card" href="drone.html"><div class="icon">🚁</div><h3>Uçan Drone</h3><p>Fabrikadaki boruların arasından drone'u geçir. Tek tuşla oynanır.</p></a>
+      <a class="card" href="2048.html"><div class="icon">🔢</div><h3>2048</h3><p>Aynı sayıları birleştir, 2048'e ulaşmaya çalış.</p></a>
+    </div>
+  </div>
+</section>
+
+<section id="iletisim" class="contact">
+  <div class="wrap">
+    <h2>Bize ulaşın</h2>
+    <div class="grid">
+      <a class="card" href="tel:+905347411114"><div class="icon">📞</div><div><b>Telefon</b><small>0534 741 11 14</small></div></a>
+      <a class="card" href="https://wa.me/905347411114?text=Merhaba%2C%20web%20sitenizden%20ula%C5%9F%C4%B1yorum." target="_blank" rel="noopener"><div class="icon">💬</div><div><b>WhatsApp</b><small>Hemen mesaj yazın</small></div></a>
+      <a class="card" href="mailto:cansuzkadirhan@gmail.com"><div class="icon">✉️</div><div><b>E-posta</b><small>cansuzkadirhan@gmail.com</small></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">© 2026 Kcansuz · Endüstriyel Otomasyon</div>
+</footer>
+
+</body>
+</html>

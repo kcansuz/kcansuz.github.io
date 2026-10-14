@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2048 | Kcansuz</title>
+<meta name="description" content="2048: aynı sayıları birleştir, 2048'e ulaş. Klavye ve kaydırma kontrolü, ortak skor tablosu.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="oyun.css">
+<style>
+  .game{max-width:480px}
+  .grid{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:10px;background:#0b0f14;border:1px solid var(--line);border-radius:12px;aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none}
+  .cell{background:#161b22;border-radius:8px}
+  .tiles{position:absolute;inset:10px;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:10px;pointer-events:none}
+  .tile{display:grid;place-items:center;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(1.2rem,7vw,2.1rem);color:#0d1117}
+  .tile.new{animation:pop .18s ease-out}
+  .tile.merged{animation:bump .18s ease-out}
+  @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes bump{50%{transform:scale(1.12)}}
+  .v2{background:#30363d;color:#e6edf3}.v4{background:#3d444d;color:#e6edf3}
+  .v8{background:#7a5a2a;color:#fff}.v16{background:#9a6a24;color:#fff}.v32{background:#c27d1e;color:#fff}.v64{background:#e08e1a;color:#111}
+  .v128{background:#f5a524;font-size:clamp(1.1rem,6vw,1.8rem)}.v256{background:#f7b84a;font-size:clamp(1.1rem,6vw,1.8rem)}.v512{background:#f9c96e;font-size:clamp(1.1rem,6vw,1.8rem)}
+  .v1024{background:#2ea043;color:#fff;font-size:clamp(.95rem,5vw,1.5rem)}.v2048{background:#56d364;font-size:clamp(.95rem,5vw,1.5rem);box-shadow:0 0 24px rgba(86,211,100,.4)}
+  .vbig{background:#e6edf3;font-size:clamp(.85rem,4.4vw,1.3rem)}
+  .row-btns{display:flex;justify-content:center;gap:8px;margin-top:14px}
+  .wrapgrid{position:relative}
+  .wrapgrid .overlay{border-radius:12px}
+</style>
+</head>
+<body>
+<header><div class="bar"><a href="index.html#oyunlar" class="back">← Ana sayfa</a><span class="logo">oyun<span>_2048</span></span></div></header>
+
+<div class="game">
+  <div class="player" id="player"></div>
+  <div class="hud">
+    <div>PUAN <b id="score">0</b></div>
+    <div>EN BÜYÜK <b id="max">2</b></div>
+    <div>REKOR <b id="best">0</b></div>
+  </div>
+  <div class="wrapgrid">
+    <div class="grid" id="grid" aria-label="2048 tahtası" role="img">
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="tiles" id="tiles"></div>
+    </div>
+    <div class="overlay" id="menu">
+      <h1>20<em>48</em></h1>
+      <p>Yön tuşlarıyla ya da parmağını kaydırarak tüm sayıları kaydır. Aynı sayılar birleşir; 2048'e ulaşmaya çalış.</p>
+      <button class="btn" id="startBtn" type="button">Başla</button>
+    </div>
+    <div class="overlay" id="over" hidden>
+      <h2 id="overTitle">Hamle <em>Kalmadı</em></h2>
+      <div class="big" id="final">0</div>
+      <p id="overMsg"></p>
+      <button class="btn" id="againBtn" type="button">Tekrar Oyna</button>
+    </div>
+  </div>
+  <div class="row-btns"><button class="btn ghost" id="newBtn" type="button">↺ Yeni oyun</button></div>
+  <p class="help">Kaydırmak için <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ya da parmağını kaydır</p>
+  <section class="board"><h2>🏆 Skor tablosu <small id="boardNote"></small></h2><ol id="scoreList"></ol></section>
+</div>
+
+<script src="skor.js"></script>
+<script src="oyun-ortak.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  var set = function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} };
+  var g, score = 0, best = 0, state = 'menu', won = false, fresh = [], merged = [];
+  var board = Oyun.board('g2048', $('scoreList'), $('boardNote'));
+  Oyun.playerLine($('player'));
+
+  function empty() { var e = []; for (var i = 0; i < 16; i++) if (!g[i]) e.push(i); return e; }
+  function addTile() { var e = empty(); if (!e.length) return; var i = e[Math.floor(Math.random() * e.length)]; g[i] = Math.random() < .9 ? 2 : 4; fresh.push(i); }
+  function hud() { $('score').textContent = score; $('best').textContent = best; $('max').textContent = Math.max.apply(null, g || [2]) || 2; }
+  function render() {
+    var html = '';
+    for (var i = 0; i < 16; i++) {
+      if (!g[i]) { html += '<div></div>'; continue; }
+      var cls = 'tile ' + (g[i] > 2048 ? 'vbig' : 'v' + g[i]) + (fresh.indexOf(i) > -1 ? ' new' : '') + (merged.indexOf(i) > -1 ? ' merged' : '');
+      html += '<div class="' + cls + '">' + g[i] + '</div>';
+    }
+    $('tiles').innerHTML = html; hud();
+    $('grid').setAttribute('aria-label', '2048 tahtası, puan ' + score);
+  }
+  function save() { set('g2048_state', JSON.stringify({ g: g, score: score, won: won, nick: Oyun.nick })); }
+  function newGame() {
+    g = Array(16).fill(0); score = 0; won = false; fresh = []; merged = [];
+    addTile(); addTile(); render(); save();
+  }
+  function start(fromSaved) {
+    Oyun.requireNick().then(function () {
+      best = board.best();
+      if (!fromSaved) newGame(); else render();
+      state = 'play'; $('menu').hidden = true; $('over').hidden = true;
+    });
+  }
+  // Bir satırı sola doğru kaydırır; [yeni satır, kazanılan puan, birleşen yerler]
+  function slide(row) {
+    var a = row.filter(Boolean), out = [], gain = 0, m = [];
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] === a[i + 1]) { out.push(a[i] * 2); gain += a[i] * 2; m.push(out.length - 1); i++; }
+      else out.push(a[i]);
+    }
+    while (out.length < 4) out.push(0);
+    return [out, gain, m];
+  }
+  function idx(dir, line, k) { // satır/sütun içinde k. hücrenin indeksi (kaydırma yönüne göre)
+    if (dir === 'left') return line * 4 + k;
+    if (dir === 'right') return line * 4 + (3 - k);
+    if (dir === 'up') return k * 4 + line;
+    return (3 - k) * 4 + line;
+  }
+  function move(dir) {
+    if (state !== 'play') return;
+    var changed = false, gain = 0; fresh = []; merged = [];
+    for (var line = 0; line < 4; line++) {
+      var row = [], k;
+      for (k = 0; k < 4; k++) row.push(g[idx(dir, line, k)]);
+      var r = slide(row);
+      for (k = 0; k < 4; k++) { var ii = idx(dir, line, k); if (g[ii] !== r[0][k]) changed = true; g[ii] = r[0][k]; }
+      r[2].forEach(function (k2) { merged.push(idx(dir, line, k2)); });
+      gain += r[1];
+    }
+    if (!changed) return;
+    score += gain; addTile(); render(); save();
+    if (!won && g.indexOf(2048) > -1) { won = true; save(); showOver(true); return; }
+    if (!canMove()) showOver(false);
+  }
+  function canMove() {
+    if (empty().length) return true;
+    for (var i = 0; i < 16; i++) {
+      if (i % 4 < 3 && g[i] === g[i + 1]) return true;
+      if (i < 12 && g[i] === g[i + 4]) return true;
+    }
+    return false;
+  }
+  function showOver(win) {
+    state = win ? 'won' : 'over';
+    $('overTitle').innerHTML = win ? '2048 <em>Oldu!</em>' : 'Hamle <em>Kalmadı</em>';
+    $('againBtn').textContent = win ? 'Devam et' : 'Tekrar Oyna';
+    $('final').textContent = score; $('overMsg').textContent = 'Skor kaydediliyor…';
+    $('over').hidden = false; $('againBtn').focus();
+    if (!win) set('g2048_state', '');
+    board.submit(score).then(function (r) { $('overMsg').textContent = r.msg; best = r.best; hud(); });
+  }
+  var KEYS = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down' };
+  window.addEventListener('keydown', function (e) {
+    if (Oyun.isTyping()) return;
+    if (KEYS[e.code] && state === 'play') { e.preventDefault(); move(KEYS[e.code]); }
+  });
+  var sx = 0, sy = 0, tracking = false;
+  $('grid').addEventListener('pointerdown', function (e) { sx = e.clientX; sy = e.clientY; tracking = true; });
+  window.addEventListener('pointerup', function (e) {
+    if (!tracking) return; tracking = false;
+    var dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 28) return;
+    move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+  });
+  $('startBtn').addEventListener('click', function () { start(!!g && g.some(Boolean) && savedFor()); });
+  $('againBtn').addEventListener('click', function () {
+    if (state === 'won') { state = 'play'; $('over').hidden = true; return; }
+    start(false);
+  });
+  $('newBtn').addEventListener('click', function () { if (state === 'menu') return start(false); newGame(); state = 'play'; $('over').hidden = true; });
+  document.addEventListener('nickchange', function () { best = board.best(); hud(); });
+
+  function savedFor() { try { var s = JSON.parse(get('g2048_state') || 'null'); return s && s.nick === Oyun.nick; } catch (e) { return false; } }
+  // Yarım kalan oyunu geri yükle
+  try {
+    var s = JSON.parse(get('g2048_state') || 'null');
+    if (s && s.g && s.g.length === 16) { g = s.g; score = s.score || 0; won = !!s.won; $('startBtn').textContent = 'Devam et'; }
+    else newGame();
+  } catch (e) { newGame(); }
+  render();
+  board.refresh().then(function () { best = board.best(); hud(); });
+})();
+</script>
+</body>
+</html>

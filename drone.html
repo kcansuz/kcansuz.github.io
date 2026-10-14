@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uçan Drone | Kcansuz</title>
+<meta name="description" content="Fabrikadaki boruların arasından drone'u geçir. Tek tuşla oynanan refleks oyunu.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="oyun.css">
+<style>.game{max-width:480px}.stage{cursor:pointer}</style>
+</head>
+<body>
+<header><div class="bar"><a href="index.html#oyunlar" class="back">← Ana sayfa</a><span class="logo">uçan<span>_drone</span></span></div></header>
+
+<div class="game">
+  <div class="player" id="player"></div>
+  <div class="hud">
+    <div>PUAN <b id="score">0</b></div>
+    <div>REKOR <b id="best">0</b></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="Uçan drone oyun alanı" role="img"></canvas>
+    <div class="overlay" id="menu">
+      <h1>Uçan <em>Drone</em></h1>
+      <p>Drone'u havada tutmak için dokun, tıkla ya da Boşluk tuşuna bas. Boruların arasındaki boşluktan geç, hiçbir yere çarpma.</p>
+      <button class="btn" id="startBtn" type="button">Başla</button>
+    </div>
+    <div class="overlay" id="over" hidden>
+      <h2>Drone <em>Düştü</em></h2>
+      <div class="big" id="final">0</div>
+      <p id="overMsg"></p>
+      <button class="btn" id="againBtn" type="button">Tekrar Oyna</button>
+    </div>
+  </div>
+  <p class="help">Uçmak için <kbd>Boşluk</kbd>, tıkla ya da ekrana dokun · Duraklat: <kbd>P</kbd></p>
+  <section class="board"><h2>🏆 Skor tablosu <small id="boardNote"></small></h2><ol id="scoreList"></ol></section>
+</div>
+
+<script src="skor.js"></script>
+<script src="oyun-ortak.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var W = 400, H = 600, GROUND = 540;
+  var cv = $('c'), ctx = cv.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var GRAV = 1500, FLAP = -430, SPEED = 165, GAP = 160, PIPE_W = 64, SPACING = 230;
+  var state = 'menu', ready = false, drone, pipes, score = 0, best = 0, t = 0, groundX = 0, paused = false, sparks = [];
+  var board = Oyun.board('drone', $('scoreList'), $('boardNote'));
+  Oyun.playerLine($('player'));
+
+  // Arka plandaki fabrika silüeti (sabit, rastgele ama her seferinde aynı)
+  var skyline = [], x0 = 0, seed = 7;
+  function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  while (x0 < W * 2) { var w = 30 + rnd() * 50, h = 40 + rnd() * 110; skyline.push({ x: x0, w: w, h: h, chimney: rnd() < .35 }); x0 += w + 6; }
+
+  function hud() { $('score').textContent = score; $('best').textContent = best; }
+  function reset() {
+    drone = { x: 110, y: 260, vy: 0, rot: 0 }; pipes = []; score = 0; t = 0; ready = false; sparks = [];
+    for (var i = 0; i < 3; i++) addPipe(W + 120 + i * SPACING);
+    hud();
+  }
+  function addPipe(x) { var top = 90 + Math.random() * (GROUND - GAP - 180); pipes.push({ x: x, top: top, passed: false }); }
+  function start() {
+    Oyun.requireNick().then(function () {
+      reset(); best = board.best(); hud(); state = 'play'; paused = false;
+      $('menu').hidden = true; $('over').hidden = true;
+    });
+  }
+  function flap() {
+    if (state !== 'play' || paused) return;
+    ready = true; drone.vy = FLAP;
+    for (var i = 0; i < 6; i++) sparks.push({ x: drone.x - 6, y: drone.y + 10, vx: -40 - Math.random() * 60, vy: 60 + Math.random() * 80, life: .35 });
+  }
+  function crash() {
+    if (state !== 'play') return;
+    state = 'over';
+    $('final').textContent = score; $('overMsg').textContent = 'Skor kaydediliyor…';
+    best = Math.max(best, score); hud();
+    setTimeout(function () { $('over').hidden = false; $('againBtn').focus(); }, 500);
+    board.submit(score).then(function (r) { $('overMsg').textContent = r.msg; best = r.best; hud(); });
+  }
+
+  function update(dt) {
+    t += dt;
+    sparks.forEach(function (s) { s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt; });
+    sparks = sparks.filter(function (s) { return s.life > 0; });
+    if (state === 'menu') { if (drone) drone.y = 260 + Math.sin(t * 3) * 8; groundX = (groundX + SPEED * .5 * dt) % 24; return; }
+    if (paused) return;
+    if (state === 'over') { // düşüş animasyonu
+      if (drone.y < GROUND - 14) { drone.vy += GRAV * dt; drone.y = Math.min(GROUND - 14, drone.y + drone.vy * dt); drone.rot = Math.min(1.4, drone.rot + 4 * dt); }
+      return;
+    }
+    groundX = (groundX + SPEED * dt) % 24;
+    if (!ready) { drone.y = 260 + Math.sin(t * 3) * 8; return; }
+    drone.vy += GRAV * dt; drone.y += drone.vy * dt;
+    drone.rot = Math.max(-.45, Math.min(1.1, drone.vy / 600));
+    var speed = SPEED + Math.min(score * 2, 60);
+    pipes.forEach(function (p) {
+      p.x -= speed * dt;
+      if (!p.passed && p.x + PIPE_W < drone.x) { p.passed = true; score++; hud(); }
+    });
+    if (pipes[0].x + PIPE_W < -10) { pipes.shift(); addPipe(pipes[pipes.length - 1].x + SPACING); }
+    // çarpışma (drone yaklaşık 34×18 kutu)
+    var dx = drone.x - 17, dy = drone.y - 9, dw = 34, dh = 18;
+    if (drone.y + 9 >= GROUND || drone.y - 9 <= 0) return crash();
+    for (var i = 0; i < pipes.length; i++) {
+      var p = pipes[i];
+      if (dx + dw > p.x + 2 && dx < p.x + PIPE_W - 2 && (dy < p.top || dy + dh > p.top + GAP)) return crash();
+    }
+  }
+
+  function pipeRect(x, y, w, h, capAtBottom) {
+    var g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, '#3a434e'); g.addColorStop(.35, '#6e7681'); g.addColorStop(1, '#2a313a');
+    ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1;
+    for (var yy = y + 30; yy < y + h; yy += 60) { ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy); ctx.stroke(); }
+    // flanş + uyarı şeridi
+    var cy = capAtBottom ? y + h - 22 : y;
+    ctx.fillStyle = g; ctx.fillRect(x - 6, cy, w + 12, 22);
+    ctx.save(); ctx.beginPath(); ctx.rect(x - 6, cy + 6, w + 12, 10); ctx.clip();
+    for (var sx = x - 30; sx < x + w + 20; sx += 14) { ctx.fillStyle = '#f5a524'; ctx.beginPath(); ctx.moveTo(sx, cy + 16); ctx.lineTo(sx + 7, cy + 16); ctx.lineTo(sx + 17, cy + 6); ctx.lineTo(sx + 10, cy + 6); ctx.fill(); }
+    ctx.restore();
+    ctx.strokeStyle = '#1b2128'; ctx.strokeRect(x - 6 + .5, cy + .5, w + 11, 21);
+  }
+  function drawDrone() {
+    ctx.save(); ctx.translate(drone.x, drone.y); ctx.rotate(drone.rot * .6);
+    var spin = Math.sin(t * 60) * 12;
+    ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-14, -4); ctx.lineTo(-18, -12); ctx.moveTo(14, -4); ctx.lineTo(18, -12); ctx.stroke();
+    ctx.fillStyle = 'rgba(230,237,243,.55)';
+    ctx.fillRect(-18 - Math.abs(spin), -15, Math.abs(spin) * 2 + 1, 3); ctx.fillRect(18 - Math.abs(spin), -15, Math.abs(spin) * 2 + 1, 3);
+    ctx.fillStyle = '#c9d1d9'; ctx.beginPath(); ctx.moveTo(-17, -2); ctx.lineTo(17, -2); ctx.lineTo(12, 8); ctx.lineTo(-12, 8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#30363d'; ctx.fillRect(-9, 1, 18, 4);
+    ctx.fillStyle = '#f5a524'; ctx.beginPath(); ctx.arc(8, 3, 2.2, 0, 7); ctx.fill();
+    ctx.fillStyle = (Math.floor(t * 4) % 2) ? '#2ea043' : '#1a3d22'; ctx.beginPath(); ctx.arc(-8, 3, 2, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-8, 8); ctx.lineTo(-10, 13); ctx.moveTo(8, 8); ctx.lineTo(10, 13); ctx.stroke();
+    ctx.restore();
+  }
+  function draw() {
+    var sky = ctx.createLinearGradient(0, 0, 0, GROUND); sky.addColorStop(0, '#0b0f14'); sky.addColorStop(1, '#141a21');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(42,49,60,.35)'; ctx.lineWidth = 1;
+    for (var gx = 0; gx <= W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx + .5, 0); ctx.lineTo(gx + .5, GROUND); ctx.stroke(); }
+    // fabrika silüeti (parallax)
+    var off = (t * 18) % (W * 1);
+    ctx.fillStyle = '#121820';
+    skyline.forEach(function (b) {
+      var bx = ((b.x - off) % (W * 2) + W * 2) % (W * 2) - 40;
+      ctx.fillRect(bx, GROUND - b.h, b.w, b.h);
+      if (b.chimney) ctx.fillRect(bx + b.w * .6, GROUND - b.h - 40, 8, 40);
+    });
+    pipes.forEach(function (p) { pipeRect(p.x, -4, PIPE_W, p.top + 4, true); pipeRect(p.x, p.top + GAP, PIPE_W, GROUND - p.top - GAP, false); });
+    // zemin: konveyör
+    ctx.fillStyle = '#161b22'; ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = '#30363d'; ctx.fillRect(0, GROUND, W, 4);
+    ctx.strokeStyle = '#21262d'; ctx.lineWidth = 5;
+    for (var x = -groundX; x < W + 24; x += 24) { ctx.beginPath(); ctx.moveTo(x, GROUND + 20); ctx.lineTo(x + 10, GROUND + 6); ctx.stroke(); }
+    sparks.forEach(function (s) { ctx.globalAlpha = s.life * 2.5; ctx.fillStyle = '#c9d1d9'; ctx.fillRect(s.x, s.y, 2, 2); });
+    ctx.globalAlpha = 1;
+    if (drone) drawDrone();
+    if (state === 'play') {
+      ctx.textAlign = 'center'; ctx.font = '700 46px "JetBrains Mono", monospace'; ctx.fillStyle = 'rgba(230,237,243,.9)';
+      ctx.fillText(score, W / 2, 80);
+      if (!ready) { ctx.font = '500 14px "JetBrains Mono", monospace'; ctx.fillStyle = '#8b949e'; ctx.fillText('Uçmak için dokun ya da Boşluk', W / 2, 360); }
+      if (paused) { ctx.font = '700 26px Inter, sans-serif'; ctx.fillStyle = '#f5a524'; ctx.fillText('Duraklatıldı', W / 2, 300); }
+    }
+  }
+  var last = performance.now();
+  function loop(now) { var dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); }
+
+  $('stage').addEventListener('pointerdown', function (e) { if (e.target.closest('.overlay')) return; e.preventDefault(); if (paused) { paused = false; return; } flap(); });
+  window.addEventListener('keydown', function (e) {
+    if (Oyun.isTyping()) return;
+    if (e.code === 'KeyP' || e.code === 'Escape') { if (state === 'play') paused = !paused; return; }
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+      var el = document.activeElement; if (el && el.tagName === 'BUTTON' && state !== 'play') return;
+      e.preventDefault(); if (e.repeat) return;
+      if (state === 'play') { if (paused) paused = false; else flap(); }
+      else if (state === 'menu' || !$('over').hidden) start();
+    }
+  });
+  $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
+  document.addEventListener('visibilitychange', function () { if (document.hidden && state === 'play' && ready) paused = true; });
+  document.addEventListener('nickchange', function () { best = board.best(); hud(); });
+  reset(); state = 'menu';
+  board.refresh().then(function () { best = board.best(); hud(); });
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
