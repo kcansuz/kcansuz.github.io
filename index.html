@@ -147,6 +147,7 @@
   .clist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .clist a{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0;transition:border-color .2s var(--ease)}
   .clist a:hover{border-color:var(--accent)}
+  .clist a.wide{grid-column:1/-1}
   .clist svg{width:22px;height:22px;color:var(--accent);flex:none}
   .clist span{min-width:0}
   .clist small{display:block;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
@@ -342,8 +343,9 @@
         <div class="clist">
           <a href="tel:+905347411114"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4.5-2 1.5a12 12 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></svg><span><small>Telefon</small><b>0534 741 11 14</b></span></a>
           <a href="https://wa.me/905347411114?text=Merhaba%2C%20web%20sitenizden%20ula%C5%9F%C4%B1yorum." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.7 7.1L4 20l1-4A8 8 0 1 1 20 12z"/><path d="M9 10.5h6M9 13.5h4"/></svg><span><small>WhatsApp</small><b>Hemen mesaj yazın</b></span></a>
-          <a href="mailto:cansuzkadirhan@gmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg><span><small>E-posta</small><b>cansuzkadirhan@gmail.com</b></span></a>
-          <a href="https://github.com/kcansuz" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg><span><small>GitHub</small><b>github.com/kcansuz</b></span></a>
+          <a class="wide" href="mailto:cansuzkadirhan@gmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg><span><small>E-posta</small><b>cansuzkadirhan@gmail.com</b></span></a>
+          <a href="https://www.linkedin.com/in/kadirhancansuz" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M7.5 10v6.5M7.5 7.2v.1M11 16.5V10M11 13c0-1.7 1.2-3 2.8-3s2.7 1.1 2.7 3v3.5"/></svg><span><small lang="en">LinkedIn</small><b>in/kadirhancansuz</b></span></a>
+          <a href="https://github.com/kcansuz" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg><span><small lang="en">GitHub</small><b>github.com/kcansuz</b></span></a>
         </div>
       </div>
     </div>
@@ -359,6 +361,7 @@
     <div class="fr">
       <div class="fi">
         <a href="mailto:cansuzkadirhan@gmail.com" aria-label="E-posta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg></a>
+        <a href="https://www.linkedin.com/in/kadirhancansuz" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M7.5 10v6.5M7.5 7.2v.1M11 16.5V10M11 13c0-1.7 1.2-3 2.8-3s2.7 1.1 2.7 3v3.5"/></svg></a>
         <a href="https://github.com/kcansuz" target="_blank" rel="noopener" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a>
       </div>
       <span>© 2026 Kadirhan Cansuz. Tüm hakları saklıdır.</span>
