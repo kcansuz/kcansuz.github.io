@@ -3,151 +3,377 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kcansuz | Endüstriyel Otomasyon</title>
-<meta name="description" content="Endüstriyel otomasyon, robotik kaynak ve PLC programlama.">
+<title>Kadirhan Cansuz — Yazılım ve Endüstriyel Otomasyon</title>
+<meta name="description" content="Kodu gerçek dünyaya bağlayan yazılımlar: PLC programlama, robotik kaynak, izleme sistemleri ve tarayıcıda oynanan mini oyunlar.">
+<meta name="theme-color" content="#0b0e12">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kadirhan Cansuz — Yazılım ve Endüstriyel Otomasyon">
+<meta property="og:description" content="Yazılım geliştirme, endüstriyel otomasyon, robotik ve dijital araçlar.">
+<meta property="og:url" content="https://kcansuz.github.io/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0d1117; --panel:#161b22; --line:#2a313c;
-    --text:#e6edf3; --muted:#8b949e; --accent:#f5a524; --accent2:#2ea043;
+    --bg:#0b0e12; --bg-2:#0f1318; --surface:#12171d; --surface-2:#171d24;
+    --line:#222932; --line-2:#2d3540;
+    --text:#f3f5f7; --text-2:#a9b2bf; --text-3:#788291;
+    --accent:#b6f36a; --accent-ink:#0b0e12;
+    --wrap:1200px; --ease:cubic-bezier(.2,.7,.2,1);
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.6}
+  *,*::before,*::after{box-sizing:border-box}
+  *{margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:84px}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
   a{color:inherit;text-decoration:none}
-  .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+  img,svg{display:block;max-width:100%}
+  ul{list-style:none}
+  ::selection{background:var(--accent);color:var(--accent-ink)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 20px}
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
 
   /* Üst menü */
-  header{position:sticky;top:0;background:rgba(13,17,23,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:10}
-  nav{display:flex;justify-content:space-between;align-items:center;height:64px}
-  .logo{font-family:'JetBrains Mono',monospace;font-size:1.1rem}
-  .logo span{color:var(--accent)}
-  .menu{display:flex;gap:22px;font-size:.95rem;color:var(--muted)}
+  .top{position:sticky;top:0;z-index:20;background:rgba(11,14,18,.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .top .wrap{height:72px;display:flex;align-items:center;gap:24px}
+  .brand{display:flex;align-items:center;gap:12px;flex:none}
+  .brand svg{width:34px;height:34px}
+  .brand b{display:block;font-weight:600;font-size:1.05rem;letter-spacing:.14em;line-height:1.1;white-space:nowrap}
+  .brand small{display:block;font-size:.62rem;letter-spacing:.36em;color:var(--text-3);font-weight:500;margin-top:4px;white-space:nowrap}
+  .menu{display:flex;gap:4px;margin-left:auto}
+  .menu a{padding:9px 14px;color:var(--text-2);font-size:.95rem;border-radius:6px;transition:color .15s var(--ease)}
   .menu a:hover{color:var(--text)}
+  .cta{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 20px;border:1px solid var(--accent);border-radius:8px;font-weight:500;font-size:.95rem;white-space:nowrap;transition:background-color .15s var(--ease),color .15s var(--ease)}
+  .cta:hover{background:var(--accent);color:var(--accent-ink)}
+  .cta svg,.btn svg,.tlink svg{width:16px;height:16px;transition:transform .2s var(--ease)}
+  @media (max-width:860px){.menu{display:none}.top .cta{margin-left:auto}}
+  @media (max-width:480px){.brand small{display:none}.brand b{font-size:.85rem;letter-spacing:.08em}.top .cta{padding:0 14px;height:40px;font-size:.88rem}.top .cta span{display:none}}
 
-  /* Giriş */
-  .hero{padding:90px 0 70px;position:relative;overflow:hidden}
-  .hero::before{content:"";position:absolute;inset:0;
-    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
-    background-size:40px 40px;opacity:.25;mask-image:radial-gradient(ellipse at top,#000 30%,transparent 75%)}
-  .hero .wrap{position:relative}
-  .status{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.8rem;
-    color:var(--accent2);border:1px solid var(--line);padding:6px 12px;border-radius:20px;background:var(--panel)}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:blink 1.6s infinite}
-  @keyframes blink{50%{opacity:.25}}
-  h1{font-size:clamp(2.2rem,6vw,3.6rem);font-weight:800;line-height:1.1;margin:22px 0 18px}
-  h1 em{font-style:normal;color:var(--accent)}
-  .lead{color:var(--muted);font-size:1.1rem;max-width:600px}
-  .btns{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
-  .btn{padding:12px 22px;border-radius:8px;font-weight:600;border:1px solid var(--line)}
-  .btn.primary{background:var(--accent);color:#111;border-color:var(--accent)}
-  .btn:hover{filter:brightness(1.1)}
+  /* Hero */
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero .wrap{position:relative;min-height:560px;display:flex;align-items:center}
+  .hero-copy{position:relative;z-index:2;max-width:600px;padding:64px 0}
+  .eyebrow{display:inline-flex;align-items:center;gap:12px;color:var(--accent);font-size:.8rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+  .eyebrow i{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(182,243,106,.14)}
+  h1{font-size:clamp(2.3rem,1.4rem + 3.4vw,3.9rem);line-height:1.05;letter-spacing:-.035em;font-weight:600;margin:24px 0 20px}
+  h1 span{color:var(--accent)}
+  .lead{font-size:clamp(1.05rem,.95rem + .4vw,1.25rem);color:var(--text-2);max-width:46ch}
+  .actions{display:flex;flex-wrap:wrap;align-items:center;gap:18px 30px;margin-top:36px}
+  .btn{display:inline-flex;align-items:center;gap:12px;height:54px;padding:0 26px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:1.02rem;transition:background-color .15s var(--ease)}
+  .btn:hover{background:#c6f888}
+  .btn:hover svg{transform:translate(2px,-2px)}
+  .tlink{display:inline-flex;align-items:center;gap:10px;color:var(--accent);font-weight:500}
+  .tlink span{border-bottom:1px solid rgba(182,243,106,.5);padding-bottom:2px}
+  .tlink:hover svg{transform:translateX(3px)}
+  .art{position:absolute;z-index:1;top:0;bottom:0;right:-20px;width:64%;pointer-events:none}
+  .art svg{width:100%;height:100%}
+  .art::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,var(--bg) 0%,rgba(11,14,18,.8) 18%,rgba(11,14,18,0) 45%),linear-gradient(0deg,var(--bg) 0%,rgba(11,14,18,0) 20%)}
+  .spark-glow{animation:flicker 1.6s steps(4) infinite}
+  @keyframes flicker{0%,100%{opacity:.9}25%{opacity:.55}50%{opacity:1}75%{opacity:.7}}
+  .signal{stroke-dasharray:6 200;animation:travel 4s linear infinite}
+  @keyframes travel{from{stroke-dashoffset:206}to{stroke-dashoffset:0}}
+  .blink{animation:blink 2s steps(2,start) infinite}
+  @keyframes blink{to{visibility:hidden}}
+  .trend{stroke-dasharray:400;animation:draw 6s ease-in-out infinite alternate}
+  @keyframes draw{from{stroke-dashoffset:400}to{stroke-dashoffset:0}}
+  @media (max-width:960px){
+    .hero .wrap{flex-direction:column;align-items:stretch;min-height:0}
+    .hero-copy{padding:48px 0 8px}
+    .art{position:relative;width:auto;height:300px;right:auto;margin:0 -20px}
+    .art::before{background:linear-gradient(180deg,var(--bg) 0%,rgba(11,14,18,0) 25%,rgba(11,14,18,0) 70%,var(--bg) 100%)}
+  }
+
+  /* Uzmanlık şeridi */
+  .strip{border-bottom:1px solid var(--line)}
+  .strip ul{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+  .strip li{display:flex;gap:16px;align-items:center;padding:28px 22px}
+  .strip li:first-child{padding-left:0}
+  .strip li+li{border-left:1px solid var(--line)}
+  .strip svg{width:40px;height:40px;flex:none;color:var(--accent)}
+  .strip h2{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+  .strip p{color:var(--text-2);font-size:.9rem;margin-top:3px}
+  @media (max-width:1100px){.strip ul{grid-template-columns:repeat(2,minmax(0,1fr))}.strip li:nth-child(3){border-left:0;padding-left:0}.strip li:nth-child(n+3){border-top:1px solid var(--line)}}
+  @media (max-width:600px){.strip ul{grid-template-columns:1fr}.strip li{padding:20px 0;border-left:0!important}.strip li+li{border-top:1px solid var(--line)}}
 
   /* Bölümler */
-  section{padding:70px 0;border-top:1px solid var(--line)}
-  h2{font-size:2rem;margin:0 0 30px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;transition:.2s}
-  .card:hover{border-color:var(--accent);transform:translateY(-3px)}
-  .icon{font-size:1.8rem;margin-bottom:12px}
-  .card h3{font-size:1.1rem;margin-bottom:8px}
-  .card p{color:var(--muted);font-size:.95rem}
+  section.sec{padding:80px 0 0}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+  .head h2{display:flex;align-items:center;gap:16px;font-size:clamp(1.6rem,1.3rem + 1vw,2.1rem);font-weight:600;letter-spacing:-.02em}
+  .head h2::after{content:"";width:30px;height:3px;background:var(--accent);border-radius:2px}
+  .head p{color:var(--text-2);max-width:56ch;margin-top:10px}
+  .kicker{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);font-weight:600;margin-bottom:10px}
 
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-top:10px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;text-align:center}
-  .stat b{display:block;font-size:2rem;color:var(--accent);font-family:'JetBrains Mono',monospace}
-  .stat span{color:var(--muted);font-size:.9rem}
+  /* Hizmetler */
+  .services{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+  .svc{position:relative;padding:28px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2);transition:border-color .2s var(--ease)}
+  .svc:hover{border-color:var(--line-2)}
+  .svc .ic{width:48px;height:48px;border-radius:10px;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--accent);margin-bottom:22px}
+  .svc .ic svg{width:24px;height:24px}
+  .svc .num{position:absolute;top:28px;right:28px;font-size:.78rem;color:var(--text-3)}
+  .svc h3{font-size:1.2rem;font-weight:600;margin-bottom:8px}
+  .svc p{color:var(--text-2);font-size:.96rem}
+  .svc ul{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:8px}
+  .svc li{display:flex;gap:10px;color:var(--text-2);font-size:.9rem}
+  .svc li::before{content:"";width:6px;height:6px;margin-top:8px;flex:none;border-radius:50%;background:var(--accent)}
+  @media (max-width:960px){.services{grid-template-columns:1fr}}
 
-  .contact a.card{display:flex;align-items:center;gap:14px}
-  .contact .icon{margin:0}
-  .contact small{display:block;color:var(--muted)}
+  /* Oyunlar */
+  .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
+  .game{position:relative;display:flex;gap:18px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2);transition:border-color .2s var(--ease),transform .25s var(--ease)}
+  .game:hover{border-color:var(--line-2);transform:translateY(-2px)}
+  .game img{width:112px;height:112px;flex:none;border-radius:8px;border:1px solid var(--line);object-fit:cover;background:var(--surface)}
+  .game div{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;padding:4px 44px 0 0}
+  .game h3{font-size:1.1rem;font-weight:600}
+  .game h3 a::after{content:"";position:absolute;inset:0}
+  .game p{color:var(--text-2);font-size:.9rem;line-height:1.45}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .tags li{font-size:.72rem;color:var(--text-2);border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:3px 8px}
+  .arrow{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;transition:all .2s var(--ease)}
+  .arrow svg{width:16px;height:16px}
+  .game:hover .arrow{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .game.featured{grid-row:span 2;flex-direction:column}
+  .game.featured img{width:100%;height:auto;aspect-ratio:760/460}
+  .game.featured div{padding:6px 4px 4px}
+  .game.featured h3{font-size:1.3rem}
+  .game.featured .arrow{top:auto;bottom:18px;right:18px}
+  @media (max-width:520px){.games{grid-template-columns:1fr}.game img{width:88px;height:88px}.game.featured{grid-row:auto}}
 
-  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:.85rem;text-align:center}
+  /* İletişim */
+  .contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:32px 56px;align-items:center;padding:44px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(135deg,var(--bg-2),var(--bg))}
+  .contact h2{font-size:clamp(1.6rem,1.2rem + 1.4vw,2.4rem);line-height:1.12;letter-spacing:-.025em;font-weight:600}
+  .contact h2 span{color:var(--accent)}
+  .contact .intro{color:var(--text-2);margin-top:14px;max-width:42ch}
+  .clist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .clist a{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0;transition:border-color .2s var(--ease)}
+  .clist a:hover{border-color:var(--accent)}
+  .clist svg{width:22px;height:22px;color:var(--accent);flex:none}
+  .clist span{min-width:0}
+  .clist small{display:block;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+  .clist b{display:block;font-weight:500;font-size:.96rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media (max-width:960px){.contact{grid-template-columns:1fr;padding:28px}}
+  @media (max-width:520px){.clist{grid-template-columns:1fr}}
 
-  @media (max-width:640px){
-    .menu{display:none}
-    .hero{padding:60px 0 50px}
-  }
+  /* Alt bilgi */
+  footer{border-top:1px solid var(--line);margin-top:88px}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;padding-top:28px;padding-bottom:28px}
+  .fr{display:flex;align-items:center;gap:20px;color:var(--text-3);font-size:.88rem;flex-wrap:wrap}
+  .fi{display:flex;gap:4px;padding-right:20px;border-right:1px solid var(--line)}
+  .fi a{width:38px;height:38px;display:grid;place-items:center;border-radius:8px;color:var(--text-2)}
+  .fi a:hover{color:var(--accent);background:var(--surface)}
+  .fi svg{width:19px;height:19px}
+
+  .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 </style>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="ortak.css">
 </head>
 <body>
 
-<header>
-  <nav class="wrap">
-    <a href="#" class="brand" aria-label="Kadirhan Cansuz"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 4h7v32H8z" fill="#b6f36a"/><path d="M15 21 29 4h8L22.5 21 37 36h-8.5z" fill="#b6f36a"/></svg><span>KADIRHAN CANSUZ</span></a>
-    <div class="menu">
+<header class="top">
+  <div class="wrap">
+    <a href="#" class="brand" aria-label="Kadirhan Cansuz — ana sayfa">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 4h7v32H8z" fill="#b6f36a"/><path d="M15 21 29 4h8L22.5 21 37 36h-8.5z" fill="#b6f36a"/></svg>
+      <span><b>KADIRHAN CANSUZ</b><small>YAZILIM &amp; OTOMASYON</small></span>
+    </a>
+    <nav class="menu" aria-label="Ana menü">
       <a href="#hizmetler">Hizmetler</a>
-      <a href="#projeler">Projeler</a>
-      <a href="#oyunlar">Oyunlar</a>
+      <a href="#oyunlar">Mini Oyunlar</a>
       <a href="#iletisim">İletişim</a>
-    </div>
-  </nav>
+    </nav>
+    <a class="cta" href="#iletisim"><span>İletişime geç</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+  </div>
 </header>
 
-<div class="hero">
-  <div class="wrap">
-    <div class="status"><span class="dot"></span> SYSTEM ONLINE</div>
-    <h1>Makineleri <em>akıllı</em><br>hale getiriyoruz.</h1>
-    <p class="lead">Endüstriyel otomasyon, robotik kaynak hücreleri ve PLC programlama. Fikirden devreye almaya kadar.</p>
-    <div class="btns">
-      <a href="#iletisim" class="btn primary">İletişime Geç</a>
-      <a href="#hizmetler" class="btn">Neler Yapıyoruz?</a>
-    </div>
-  </div>
-</div>
+<main>
+  <section class="hero" aria-labelledby="baslik">
+    <div class="wrap">
+      <div class="hero-copy">
+        <p class="eyebrow"><i aria-hidden="true"></i>Yazılım × Otomasyon × Mühendislik</p>
+        <h1 id="baslik">Kodu <span>gerçek dünyaya</span> bağlayan yazılımlar geliştiriyorum.</h1>
+        <p class="lead">Yazılım geliştirme, endüstriyel otomasyon, robotik ve dijital araçlar.</p>
+        <div class="actions">
+          <a class="btn" href="#hizmetler">Neler yapıyorum<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+          <a class="tlink" href="#iletisim"><span>İletişime geç</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+      <div class="art"><svg viewBox="0 0 760 540" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="hero-art-title">
+<title id="hero-art-title">PLC rafı, HMI ekranı ve ladder diyagramı olan robotik kaynak hücresi illüstrasyonu</title>
+<defs>
+  <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#151a20" stroke-width="1"/></pattern>
+  <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4450"/><stop offset=".35" stop-color="#232a33"/><stop offset="1" stop-color="#0f1317"/></linearGradient>
+  <linearGradient id="metal2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#323b46"/><stop offset=".5" stop-color="#1c222a"/><stop offset="1" stop-color="#0d1115"/></linearGradient>
+  <radialGradient id="hub" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#3a4450"/><stop offset="1" stop-color="#12171c"/></radialGradient>
+  <linearGradient id="mod" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1f262e"/><stop offset=".5" stop-color="#2a323c"/><stop offset="1" stop-color="#181e24"/></linearGradient>
+  <linearGradient id="cpu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#26303a"/><stop offset="1" stop-color="#1a2129"/></linearGradient>
+  <linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6f36a" stop-opacity=".35"/><stop offset="1" stop-color="#b6f36a" stop-opacity="0"/></linearGradient>
+  <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fffbe8"/><stop offset=".12" stop-color="#ffe2a0"/><stop offset=".35" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/></radialGradient>
+  <radialGradient id="spill" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffb347" stop-opacity=".28"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+  <radialGradient id="vign" cx=".55" cy=".45" r=".7"><stop offset=".55" stop-color="#0b0e12" stop-opacity="0"/><stop offset="1" stop-color="#0b0e12"/></radialGradient>
+</defs>
+<rect width="760" height="540" fill="#0b0e12"/>
+<rect width="760" height="540" fill="url(#g)"/>
+<g stroke="#b6f36a" stroke-opacity=".35" stroke-width="1"><path d="M610 40v14M603 47h14"/><path d="M700 300v14M693 307h14"/><path d="M90 330v14M83 337h14"/></g>
+<text x="690" y="78" text-anchor="end" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" fill="#788291" letter-spacing="2">GERÇEK SİSTEMLER</text>
+<text x="690" y="94" text-anchor="end" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" fill="#788291" letter-spacing="2">GERÇEK ÇÖZÜMLER</text>
 
-<section id="hizmetler">
-  <div class="wrap">
-    <h2>Neler yapıyoruz?</h2>
-    <div class="grid">
-      <div class="card"><div class="icon">⚙️</div><h3>PLC Programlama</h3><p>Schneider Modicon ve diğer PLC'ler için yazılım, revizyon ve arıza giderme.</p></div>
-      <div class="card"><div class="icon">🤖</div><h3>Robotik Kaynak</h3><p>Robot kaynak hücrelerinin kurulumu, programlanması ve devreye alınması.</p></div>
-      <div class="card"><div class="icon">📊</div><h3>İzleme Sistemleri</h3><p>Makinelerinizi ve kameralarınızı tek ekrandan, telefondan takip edin.</p></div>
-    </div>
-  </div>
-</section>
+<!-- signal lines -->
+<g fill="none" stroke="#b6f36a" stroke-width="1" stroke-opacity=".45" stroke-dasharray="3 4">
+  <path d="M500 100 H478 V60"/><path d="M640 264 V246"/><path d="M548 330 H530 V300"/><path d="M240 160 H300"/>
+</g>
+<path class="signal" d="M478 60 V100 H500" fill="none" stroke="#b6f36a" stroke-width="1.6"/>
+<circle cx="478" cy="60" r="3" fill="#b6f36a"/><circle cx="300" cy="160" r="3" fill="#b6f36a"/>
 
-<section id="projeler">
-  <div class="wrap">
-    <h2>Rakamlarla</h2>
-    <div class="stats">
-      <div class="stat"><b>00</b><span>Tamamlanan proje</span></div>
-      <div class="stat"><b>00</b><span>Devreye alınan robot</span></div>
-      <div class="stat"><b>00</b><span>Yıllık tecrübe</span></div>
-    </div>
-  </div>
-</section>
+<g transform="translate(40 70)"><rect width="200" height="196" rx="4" fill="rgba(15,19,24,.78)" stroke="#2d3540"/><text x="12" y="20" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" fill="#788291" letter-spacing="1">PLC</text><line x1="0" y1="30" x2="200" y2="30" stroke="#222932"/><line x1="18" y1="44" x2="18" y2="182" stroke="#788291" stroke-width="1.5"/><line x1="182" y1="44" x2="182" y2="182" stroke="#788291" stroke-width="1.5"/><line x1="18" y1="62" x2="182" y2="62" stroke="#b6f36a" stroke-width="1.2" opacity="1"/><rect x="45" y="53" width="14" height="18" fill="#0f1318"/><line x1="46" y1="53" x2="46" y2="71" stroke="#b6f36a" stroke-width="1.6"/><line x1="58" y1="53" x2="58" y2="71" stroke="#b6f36a" stroke-width="1.6"/><text x="52" y="47" font-family="JetBrains Mono, ui-monospace, monospace" font-size="9.5" fill="#a9b2bf" text-anchor="middle">I0.0</text><rect x="111" y="53" width="14" height="18" fill="#0f1318"/><line x1="112" y1="53" x2="112" y2="71" stroke="#b6f36a" stroke-width="1.6"/><line x1="124" y1="53" x2="124" y2="71" stroke="#b6f36a" stroke-width="1.6"/><text x="118" y="47" font-family="JetBrains Mono, ui-monospace, monospace" font-size="9.5" fill="#a9b2bf" text-anchor="middle">M0.0</text><line x1="18" y1="112" x2="182" y2="112" stroke="#788291" stroke-width="1.2" opacity="0.7"/><rect x="45" y="103" width="14" height="18" fill="#0f1318"/><line x1="46" y1="103" x2="46" y2="121" stroke="#788291" stroke-width="1.6"/><line x1="58" y1="103" x2="58" y2="121" stroke="#788291" stroke-width="1.6"/><text x="52" y="97" font-family="JetBrains Mono, ui-monospace, monospace" font-size="9.5" fill="#a9b2bf" text-anchor="middle">I0.1</text><rect x="111" y="103" width="14" height="18" fill="#0f1318"/><line x1="112" y1="103" x2="112" y2="121" stroke="#788291" stroke-width="1.6"/><line x1="124" y1="103" x2="124" y2="121" stroke="#788291" stroke-width="1.6"/><text x="118" y="97" font-family="JetBrains Mono, ui-monospace, monospace" font-size="9.5" fill="#a9b2bf" text-anchor="middle">T1</text><line x1="18" y1="162" x2="182" y2="162" stroke="#b6f36a" stroke-width="1.2" opacity="1"/><rect x="45" y="153" width="14" height="18" fill="#0f1318"/><line x1="46" y1="153" x2="46" y2="171" stroke="#b6f36a" stroke-width="1.6"/><line x1="58" y1="153" x2="58" y2="171" stroke="#b6f36a" stroke-width="1.6"/><text x="52" y="147" font-family="JetBrains Mono, ui-monospace, monospace" font-size="9.5" fill="#a9b2bf" text-anchor="middle">M0.0</text><rect x="111" y="153" width="14" height="18" fill="#0f1318"/><line x1="112" y1="153" x2="112" y2="171" stroke="#b6f36a" stroke-width="1.6"/><line x1="124" y1="153" x2="124" y2="171" stroke="#b6f36a" stroke-width="1.6"/><text x="118" y="147" font-family="JetBrains Mono, ui-monospace, monospace" font-size="9.5" fill="#a9b2bf" text-anchor="middle">Q0.0</text><circle cx="162" cy="162" r="8" fill="#0f1318" stroke="#b6f36a" stroke-width="1.6"/></g>
+<g transform="translate(500 128)"><rect x="-6" y="-8" width="232" height="128" rx="3" fill="#0d1115" stroke="#2d3540"/><rect x="-6" y="-8" width="232" height="10" fill="#161c22"/><rect x="0" y="6" width="31" height="104" rx="2" fill="url(#cpu)" stroke="#36404b"/><rect x="4" y="16" width="23" height="2" fill="#0b0e12" opacity=".8"/><rect x="4" y="22" width="23" height="2" fill="#0b0e12" opacity=".8"/><rect x="4" y="28" width="23" height="2" fill="#0b0e12" opacity=".8"/><rect x="4" y="34" width="23" height="2" fill="#0b0e12" opacity=".8"/><rect x="4" y="40" width="23" height="2" fill="#0b0e12" opacity=".8"/><rect x="5" y="52" width="4" height="4" fill="#b6f36a"/><rect x="12" y="53" width="15" height="2" fill="#3a4450"/><rect x="5" y="61" width="4" height="4" fill="#2b333c"/><rect x="12" y="62" width="15" height="2" fill="#3a4450"/><rect x="5" y="70" width="4" height="4" fill="#b6f36a"/><rect x="12" y="71" width="15" height="2" fill="#3a4450"/><rect x="5" y="79" width="4" height="4" fill="#2b333c"/><rect x="12" y="80" width="15" height="2" fill="#3a4450"/><rect x="3" y="92" width="25" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/><rect x="34" y="6" width="23" height="104" rx="2" fill="url(#mod)" stroke="#36404b"/><rect x="38" y="16" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="38" y="22" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="38" y="28" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="38" y="34" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="38" y="40" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="39" y="52" width="4" height="4" fill="#2b333c"/><rect x="46" y="53" width="7" height="2" fill="#3a4450"/><rect x="39" y="61" width="4" height="4" fill="#2b333c"/><rect x="46" y="62" width="7" height="2" fill="#3a4450"/><rect x="39" y="70" width="4" height="4" fill="#b6f36a"/><rect x="46" y="71" width="7" height="2" fill="#3a4450"/><rect x="39" y="79" width="4" height="4" fill="#2b333c"/><rect x="46" y="80" width="7" height="2" fill="#3a4450"/><rect x="37" y="92" width="17" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/><rect x="60" y="6" width="23" height="104" rx="2" fill="url(#mod)" stroke="#36404b"/><rect x="64" y="16" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="64" y="22" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="64" y="28" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="64" y="34" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="64" y="40" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="65" y="52" width="4" height="4" fill="#2b333c"/><rect x="72" y="53" width="7" height="2" fill="#3a4450"/><rect class="blink" x="65" y="61" width="4" height="4" fill="#b6f36a"/><rect x="72" y="62" width="7" height="2" fill="#3a4450"/><rect x="65" y="70" width="4" height="4" fill="#2b333c"/><rect x="72" y="71" width="7" height="2" fill="#3a4450"/><rect x="65" y="79" width="4" height="4" fill="#2b333c"/><rect x="72" y="80" width="7" height="2" fill="#3a4450"/><rect x="63" y="92" width="17" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/><rect x="86" y="6" width="23" height="104" rx="2" fill="url(#mod)" stroke="#36404b"/><rect x="90" y="16" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="90" y="22" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="90" y="28" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="90" y="34" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="90" y="40" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="91" y="52" width="4" height="4" fill="#2b333c"/><rect x="98" y="53" width="7" height="2" fill="#3a4450"/><rect x="91" y="61" width="4" height="4" fill="#b6f36a"/><rect x="98" y="62" width="7" height="2" fill="#3a4450"/><rect x="91" y="70" width="4" height="4" fill="#2b333c"/><rect x="98" y="71" width="7" height="2" fill="#3a4450"/><rect x="91" y="79" width="4" height="4" fill="#b6f36a"/><rect x="98" y="80" width="7" height="2" fill="#3a4450"/><rect x="89" y="92" width="17" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/><rect x="112" y="6" width="23" height="104" rx="2" fill="url(#mod)" stroke="#36404b"/><rect x="116" y="16" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="116" y="22" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="116" y="28" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="116" y="34" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="116" y="40" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="117" y="52" width="4" height="4" fill="#b6f36a"/><rect x="124" y="53" width="7" height="2" fill="#3a4450"/><rect x="117" y="61" width="4" height="4" fill="#2b333c"/><rect x="124" y="62" width="7" height="2" fill="#3a4450"/><rect x="117" y="70" width="4" height="4" fill="#2b333c"/><rect x="124" y="71" width="7" height="2" fill="#3a4450"/><rect x="117" y="79" width="4" height="4" fill="#b6f36a"/><rect x="124" y="80" width="7" height="2" fill="#3a4450"/><rect x="115" y="92" width="17" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/><rect x="138" y="6" width="23" height="104" rx="2" fill="url(#mod)" stroke="#36404b"/><rect x="142" y="16" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="142" y="22" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="142" y="28" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="142" y="34" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="142" y="40" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="143" y="52" width="4" height="4" fill="#b6f36a"/><rect x="150" y="53" width="7" height="2" fill="#3a4450"/><rect x="143" y="61" width="4" height="4" fill="#2b333c"/><rect x="150" y="62" width="7" height="2" fill="#3a4450"/><rect x="143" y="70" width="4" height="4" fill="#b6f36a"/><rect x="150" y="71" width="7" height="2" fill="#3a4450"/><rect class="blink" x="143" y="79" width="4" height="4" fill="#2b333c"/><rect x="150" y="80" width="7" height="2" fill="#3a4450"/><rect x="141" y="92" width="17" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/><rect x="164" y="6" width="23" height="104" rx="2" fill="url(#mod)" stroke="#36404b"/><rect x="168" y="16" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="168" y="22" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="168" y="28" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="168" y="34" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="168" y="40" width="15" height="2" fill="#0b0e12" opacity=".8"/><rect x="169" y="52" width="4" height="4" fill="#2b333c"/><rect x="176" y="53" width="7" height="2" fill="#3a4450"/><rect x="169" y="61" width="4" height="4" fill="#2b333c"/><rect x="176" y="62" width="7" height="2" fill="#3a4450"/><rect x="169" y="70" width="4" height="4" fill="#b6f36a"/><rect x="176" y="71" width="7" height="2" fill="#3a4450"/><rect x="169" y="79" width="4" height="4" fill="#2b333c"/><rect x="176" y="80" width="7" height="2" fill="#3a4450"/><rect x="167" y="92" width="17" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/><rect x="190" y="6" width="21" height="104" rx="2" fill="url(#mod)" stroke="#36404b"/><rect x="194" y="16" width="13" height="2" fill="#0b0e12" opacity=".8"/><rect x="194" y="22" width="13" height="2" fill="#0b0e12" opacity=".8"/><rect x="194" y="28" width="13" height="2" fill="#0b0e12" opacity=".8"/><rect x="194" y="34" width="13" height="2" fill="#0b0e12" opacity=".8"/><rect x="194" y="40" width="13" height="2" fill="#0b0e12" opacity=".8"/><rect x="195" y="52" width="4" height="4" fill="#2b333c"/><rect x="202" y="53" width="5" height="2" fill="#3a4450"/><rect x="195" y="61" width="4" height="4" fill="#b6f36a"/><rect x="202" y="62" width="5" height="2" fill="#3a4450"/><rect x="195" y="70" width="4" height="4" fill="#2b333c"/><rect x="202" y="71" width="5" height="2" fill="#3a4450"/><rect x="195" y="79" width="4" height="4" fill="#2b333c"/><rect x="202" y="80" width="5" height="2" fill="#3a4450"/><rect x="193" y="92" width="15" height="12" rx="1" fill="#0b0e12" stroke="#2d3540"/></g>
+<g transform="translate(556 302)"><rect x="-8" y="-8" width="184" height="150" rx="6" fill="#0d1115" stroke="#36404b"/><rect width="168" height="112" rx="2" fill="#0a1014" stroke="#222932"/><text x="8" y="14" font-family="JetBrains Mono, ui-monospace, monospace" font-size="8" fill="#788291">PROSES</text><text x="160" y="14" font-family="JetBrains Mono, ui-monospace, monospace" font-size="8" fill="#b6f36a" text-anchor="end">● RUN</text><line x1="14" y1="34" x2="156" y2="34" stroke="#1a2128"/><line x1="14" y1="52" x2="156" y2="52" stroke="#1a2128"/><line x1="14" y1="70" x2="156" y2="70" stroke="#1a2128"/><line x1="14" y1="88" x2="156" y2="88" stroke="#1a2128"/><path class="trend" d="M14 86 L28 78 L40 84 L54 60 L66 70 L80 52 L94 64 L108 56 L122 74 L136 62 L150 68" fill="none" stroke="#b6f36a" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 86 L28 78 L40 84 L54 60 L66 70 L80 52 L94 64 L108 56 L122 74 L136 62 L150 68 L150 88 L14 88 Z" fill="url(#area)" opacity=".5"/><rect x="12" y="96" width="30" height="9" rx="1.5" fill="#1f3a14" stroke="#b6f36a" stroke-width=".8"/><rect x="50" y="96" width="30" height="9" rx="1.5" fill="#161c22" stroke="#2d3540" stroke-width=".8"/><rect x="88" y="96" width="30" height="9" rx="1.5" fill="#161c22" stroke="#2d3540" stroke-width=".8"/><rect x="126" y="96" width="30" height="9" rx="1.5" fill="#161c22" stroke="#2d3540" stroke-width=".8"/><circle cx="18" cy="128" r="4" fill="#1c232b" stroke="#36404b"/><circle cx="32" cy="128" r="4" fill="#1c232b" stroke="#36404b"/></g>
 
-<section id="oyunlar">
-  <div class="wrap">
-    <h2>Mola zamanı</h2>
-    <div class="grid">
-      <a class="card" href="kaynak.html"><div class="icon">🔥</div><h3>Robot Kaynak</h3><p>Bant üzerindeki parçaları doğru anda kaynakla, komboyu yakala, rekoru kır.</p></a>
-      <a class="card" href="plc.html"><div class="icon">🧩</div><h3>PLC Mantık Bulmacası</h3><p>AND, OR, NOT, XOR kapılarıyla devreyi kur, motoru çalıştır. 8 seviye.</p></a>
-      <a class="card" href="yilan.html"><div class="icon">🐍</div><h3>Yılan</h3><p>Klasik yılan oyunu. Ye, büyü, kuyruğunu ısırma; büyüdükçe hızlanır.</p></a>
-      <a class="card" href="drone.html"><div class="icon">🚁</div><h3>Uçan Drone</h3><p>Fabrikadaki boruların arasından drone'u geçir. Tek tuşla oynanır.</p></a>
-      <a class="card" href="2048.html"><div class="icon">🔢</div><h3>2048</h3><p>Aynı sayıları birleştir, 2048'e ulaşmaya çalış.</p></a>
-    </div>
-  </div>
-</section>
+<!-- floor + bench -->
+<ellipse cx="300" cy="470" rx="320" ry="26" fill="#0e1216"/>
+<ellipse cx="288" cy="380" rx="190" ry="70" fill="url(#spill)"/>
+<g>
+  <rect x="140" y="376" width="300" height="12" rx="2" fill="url(#metal2)" stroke="#36404b"/>
+  <rect x="140" y="388" width="300" height="5" fill="#0b0e12"/>
+  <rect x="158" y="393" width="12" height="74" fill="url(#metal2)" stroke="#2d3540"/>
+  <rect x="410" y="393" width="12" height="74" fill="url(#metal2)" stroke="#2d3540"/>
+  <rect x="164" y="440" width="252" height="6" fill="#151a20"/>
+  <!-- clamps + workpiece -->
+  <rect x="196" y="354" width="14" height="22" fill="#232a33" stroke="#3a4450"/>
+  <rect x="368" y="354" width="14" height="22" fill="#232a33" stroke="#3a4450"/>
+  <rect x="210" y="358" width="158" height="18" rx="1" fill="url(#metal)" stroke="#4a5562"/>
+  <rect x="228" y="346" width="116" height="12" rx="6" fill="url(#metal2)" stroke="#4a5562"/>
+  <line x1="288" y1="346" x2="288" y2="376" stroke="#ff9a3c" stroke-width="2.2" opacity=".9"/>
+  <line x1="228" y1="352" x2="288" y2="352" stroke="#7a5a3a" stroke-width="1.4" opacity=".7"/>
+</g>
 
-<section id="iletisim" class="contact">
-  <div class="wrap">
-    <h2>Bize ulaşın</h2>
-    <div class="grid">
-      <a class="card" href="tel:+905347411114"><div class="icon">📞</div><div><b>Telefon</b><small>0534 741 11 14</small></div></a>
-      <a class="card" href="https://wa.me/905347411114?text=Merhaba%2C%20web%20sitenizden%20ula%C5%9F%C4%B1yorum." target="_blank" rel="noopener"><div class="icon">💬</div><div><b>WhatsApp</b><small>Hemen mesaj yazın</small></div></a>
-      <a class="card" href="mailto:cansuzkadirhan@gmail.com"><div class="icon">✉️</div><div><b>E-posta</b><small>cansuzkadirhan@gmail.com</small></div></a>
+<!-- robot -->
+<g>
+  <path d="M470 470 Q520 470 520 430 L520 300" fill="none" stroke="#07090b" stroke-width="7"/>
+  <rect x="408" y="440" width="90" height="30" rx="3" fill="url(#metal2)" stroke="#36404b"/>
+  <rect x="420" y="400" width="66" height="44" rx="6" fill="url(#metal)" stroke="#3a4450"/>
+  <path d="M424 404 h58" stroke="#5a6672" stroke-width="2" opacity=".5"/>
+  <g transform="translate(453 362) rotate(-107.80)"><rect x="-9.2" y="-23.0" width="218.0" height="46" rx="20.7" fill="url(#metal)" stroke="#3a4450" stroke-width="1"/><rect x="13.8" y="-20.0" width="172.0" height="2" rx="1" fill="#5a6672" opacity=".55"/></g>
+  <circle cx="453" cy="362" r="34" fill="url(#hub)" stroke="#3a4450"/><circle cx="453" cy="362" r="21.1" fill="#0d1115" stroke="#2c343e"/><circle cx="453" cy="362" r="9.5" fill="#1c232b"/><circle cx="478.6" cy="368.9" r="1.6" fill="#4a5562"/><circle cx="459.9" cy="387.6" r="1.6" fill="#4a5562"/><circle cx="434.2" cy="380.8" r="1.6" fill="#4a5562"/><circle cx="427.4" cy="355.1" r="1.6" fill="#4a5562"/><circle cx="446.1" cy="336.4" r="1.6" fill="#4a5562"/><circle cx="471.8" cy="343.2" r="1.6" fill="#4a5562"/>
+  <path d="M470 380 C500 330 470 250 420 190" fill="none" stroke="#07090b" stroke-width="6"/>
+  <path d="M470 380 C500 330 470 250 420 190" fill="none" stroke="#1f262e" stroke-width="2"/>
+  <g transform="translate(392 172) rotate(137.73)"><rect x="-6.8" y="-17.0" width="132.5" height="34" rx="15.3" fill="url(#metal)" stroke="#3a4450" stroke-width="1"/><rect x="10.2" y="-14.0" width="98.5" height="2" rx="1" fill="#5a6672" opacity=".55"/></g>
+  <circle cx="392" cy="172" r="27" fill="url(#hub)" stroke="#3a4450"/><circle cx="392" cy="172" r="16.7" fill="#0d1115" stroke="#2c343e"/><circle cx="392" cy="172" r="7.6" fill="#1c232b"/><circle cx="392" cy="172" r="22.1" fill="none" stroke="#b6f36a" stroke-width="1.4" opacity=".8"/><circle cx="412.3" cy="177.5" r="1.6" fill="#4a5562"/><circle cx="397.5" cy="192.3" r="1.6" fill="#4a5562"/><circle cx="377.1" cy="186.9" r="1.6" fill="#4a5562"/><circle cx="371.7" cy="166.5" r="1.6" fill="#4a5562"/><circle cx="386.5" cy="151.7" r="1.6" fill="#4a5562"/><circle cx="406.9" cy="157.1" r="1.6" fill="#4a5562"/>
+  <g transform="translate(304 252) rotate(98.80)"><rect x="-2.8" y="-7.0" width="90.6" height="14" rx="6.3" fill="url(#metal2)" stroke="#3a4450" stroke-width="1"/><rect x="4.2" y="-4.0" width="76.6" height="2" rx="1" fill="#5a6672" opacity=".55"/></g>
+  <circle cx="304" cy="252" r="17" fill="url(#hub)" stroke="#3a4450"/><circle cx="304" cy="252" r="10.5" fill="#0d1115" stroke="#2c343e"/><circle cx="304" cy="252" r="4.8" fill="#1c232b"/><circle cx="316.8" cy="255.4" r="1.6" fill="#4a5562"/><circle cx="307.4" cy="264.8" r="1.6" fill="#4a5562"/><circle cx="294.6" cy="261.4" r="1.6" fill="#4a5562"/><circle cx="291.2" cy="248.6" r="1.6" fill="#4a5562"/><circle cx="300.6" cy="239.2" r="1.6" fill="#4a5562"/><circle cx="313.4" cy="242.6" r="1.6" fill="#4a5562"/>
+  <!-- torch nozzle -->
+  <path d="M283 332 L299 332 L295 352 L287 352 Z" fill="#c9d0d8" stroke="#7a8592"/>
+  <rect x="282" y="326" width="18" height="8" rx="2" fill="#5a6672"/>
+</g>
+
+<!-- arc -->
+<circle class="spark-glow" cx="288" cy="356" r="70" fill="url(#glow)"/>
+<g class="spark-glow"><line x1="288" y1="356" x2="243.3" y2="305.3" stroke="#fff6d8" stroke-width="1.42" stroke-linecap="round" opacity="0.91"/><line x1="288" y1="356" x2="247.3" y2="337.8" stroke="#ffd27a" stroke-width="1.70" stroke-linecap="round" opacity="0.52"/><line x1="288" y1="356" x2="284.9" y2="341.9" stroke="#ff9a3c" stroke-width="0.80" stroke-linecap="round" opacity="0.53"/><line x1="288" y1="356" x2="303.2" y2="303.7" stroke="#fff6d8" stroke-width="1.39" stroke-linecap="round" opacity="0.79"/><line x1="288" y1="356" x2="269.7" y2="303.1" stroke="#ffd27a" stroke-width="0.75" stroke-linecap="round" opacity="0.64"/><line x1="288" y1="356" x2="227.1" y2="319.8" stroke="#ffd27a" stroke-width="1.04" stroke-linecap="round" opacity="0.55"/><line x1="288" y1="356" x2="294.0" y2="337.0" stroke="#fff6d8" stroke-width="0.81" stroke-linecap="round" opacity="0.78"/><line x1="288" y1="356" x2="300.8" y2="324.2" stroke="#ffb347" stroke-width="1.28" stroke-linecap="round" opacity="0.73"/><line x1="288" y1="356" x2="318.7" y2="343.8" stroke="#ffd27a" stroke-width="0.97" stroke-linecap="round" opacity="0.85"/><line x1="288" y1="356" x2="252.0" y2="332.8" stroke="#ffb347" stroke-width="1.28" stroke-linecap="round" opacity="0.86"/><line x1="288" y1="356" x2="225.3" y2="275.1" stroke="#ff9a3c" stroke-width="0.83" stroke-linecap="round" opacity="0.58"/><line x1="288" y1="356" x2="261.4" y2="307.5" stroke="#fff6d8" stroke-width="1.16" stroke-linecap="round" opacity="0.88"/><line x1="288" y1="356" x2="303.9" y2="307.2" stroke="#ffb347" stroke-width="1.05" stroke-linecap="round" opacity="0.80"/><line x1="288" y1="356" x2="296.2" y2="325.1" stroke="#ffb347" stroke-width="1.62" stroke-linecap="round" opacity="0.74"/><line x1="288" y1="356" x2="295.2" y2="343.3" stroke="#ff9a3c" stroke-width="1.47" stroke-linecap="round" opacity="0.64"/><line x1="288" y1="356" x2="247.8" y2="279.7" stroke="#ff9a3c" stroke-width="0.72" stroke-linecap="round" opacity="0.68"/><line x1="288" y1="356" x2="299.9" y2="324.1" stroke="#ffb347" stroke-width="0.94" stroke-linecap="round" opacity="0.56"/><line x1="288" y1="356" x2="266.0" y2="333.3" stroke="#fff6d8" stroke-width="1.66" stroke-linecap="round" opacity="0.58"/><line x1="288" y1="356" x2="278.0" y2="333.7" stroke="#ff9a3c" stroke-width="0.85" stroke-linecap="round" opacity="0.93"/><line x1="288" y1="356" x2="267.6" y2="331.1" stroke="#ff9a3c" stroke-width="1.09" stroke-linecap="round" opacity="0.98"/><line x1="288" y1="356" x2="225.6" y2="317.5" stroke="#ffd27a" stroke-width="0.96" stroke-linecap="round" opacity="0.51"/><line x1="288" y1="356" x2="310.2" y2="348.2" stroke="#ffd27a" stroke-width="1.01" stroke-linecap="round" opacity="0.71"/><line x1="288" y1="356" x2="272.7" y2="321.5" stroke="#fff6d8" stroke-width="1.75" stroke-linecap="round" opacity="0.73"/><line x1="288" y1="356" x2="343.6" y2="325.6" stroke="#ff9a3c" stroke-width="1.45" stroke-linecap="round" opacity="0.70"/><line x1="288" y1="356" x2="273.2" y2="325.4" stroke="#ffd27a" stroke-width="1.14" stroke-linecap="round" opacity="0.53"/><line x1="288" y1="356" x2="234.0" y2="310.8" stroke="#fff6d8" stroke-width="1.07" stroke-linecap="round" opacity="0.55"/><line x1="288" y1="356" x2="295.7" y2="321.3" stroke="#fff6d8" stroke-width="1.74" stroke-linecap="round" opacity="0.54"/><line x1="288" y1="356" x2="258.1" y2="341.3" stroke="#ffb347" stroke-width="1.40" stroke-linecap="round" opacity="0.80"/><line x1="288" y1="356" x2="286.6" y2="339.7" stroke="#ff9a3c" stroke-width="1.24" stroke-linecap="round" opacity="0.74"/><line x1="288" y1="356" x2="277.6" y2="340.4" stroke="#ffb347" stroke-width="1.52" stroke-linecap="round" opacity="0.74"/><line x1="288" y1="356" x2="347.5" y2="295.9" stroke="#ffb347" stroke-width="0.93" stroke-linecap="round" opacity="0.57"/><line x1="288" y1="356" x2="289.7" y2="343.7" stroke="#fff6d8" stroke-width="1.28" stroke-linecap="round" opacity="0.85"/><line x1="288" y1="356" x2="267.8" y2="333.6" stroke="#ffd27a" stroke-width="0.88" stroke-linecap="round" opacity="0.77"/><line x1="288" y1="356" x2="314.9" y2="341.4" stroke="#ffd27a" stroke-width="0.95" stroke-linecap="round" opacity="0.90"/><line x1="288" y1="356" x2="329.0" y2="326.2" stroke="#ff9a3c" stroke-width="0.95" stroke-linecap="round" opacity="0.68"/><line x1="288" y1="356" x2="220.6" y2="337.1" stroke="#ffb347" stroke-width="1.01" stroke-linecap="round" opacity="0.60"/><line x1="288" y1="356" x2="299.9" y2="331.1" stroke="#ffb347" stroke-width="1.59" stroke-linecap="round" opacity="0.98"/><line x1="288" y1="356" x2="278.9" y2="336.2" stroke="#ffd27a" stroke-width="0.95" stroke-linecap="round" opacity="0.67"/><line x1="288" y1="356" x2="284.9" y2="300.7" stroke="#fff6d8" stroke-width="1.37" stroke-linecap="round" opacity="0.74"/><line x1="288" y1="356" x2="317.9" y2="315.5" stroke="#fff6d8" stroke-width="0.79" stroke-linecap="round" opacity="0.95"/><line x1="288" y1="356" x2="360.4" y2="292.4" stroke="#ffd27a" stroke-width="1.23" stroke-linecap="round" opacity="0.72"/><line x1="288" y1="356" x2="294.6" y2="341.9" stroke="#ff9a3c" stroke-width="1.74" stroke-linecap="round" opacity="0.73"/><line x1="288" y1="356" x2="302.1" y2="346.1" stroke="#ffd27a" stroke-width="0.87" stroke-linecap="round" opacity="0.51"/><line x1="288" y1="356" x2="297.4" y2="324.9" stroke="#ff9a3c" stroke-width="1.42" stroke-linecap="round" opacity="0.83"/><line x1="288" y1="356" x2="270.9" y2="322.9" stroke="#fff6d8" stroke-width="0.84" stroke-linecap="round" opacity="0.90"/><line x1="288" y1="356" x2="341.4" y2="313.7" stroke="#ffd27a" stroke-width="1.52" stroke-linecap="round" opacity="0.72"/><circle cx="390.0" cy="331.9" r="1.1" fill="#ffd27a" opacity="0.58"/><circle cx="226.5" cy="323.2" r="1.2" fill="#ffd27a" opacity="0.48"/><circle cx="344.6" cy="358.2" r="1.4" fill="#ffd27a" opacity="0.94"/><circle cx="258.2" cy="289.0" r="1.3" fill="#ffd27a" opacity="0.71"/><circle cx="219.7" cy="358.7" r="0.8" fill="#ffd27a" opacity="0.88"/><circle cx="226.2" cy="351.8" r="1.4" fill="#ffd27a" opacity="0.60"/><circle cx="292.7" cy="322.9" r="0.9" fill="#ffd27a" opacity="0.74"/><circle cx="252.2" cy="354.3" r="1.3" fill="#ffd27a" opacity="0.74"/><circle cx="375.7" cy="311.6" r="1.4" fill="#ffd27a" opacity="0.70"/><circle cx="291.7" cy="302.3" r="1.3" fill="#ffd27a" opacity="0.69"/><circle cx="383.3" cy="369.9" r="1.7" fill="#ffd27a" opacity="0.56"/><circle cx="311.0" cy="296.1" r="0.9" fill="#ffd27a" opacity="0.47"/><circle cx="282.9" cy="344.0" r="0.9" fill="#ffd27a" opacity="0.80"/><circle cx="380.4" cy="308.5" r="1.5" fill="#ffd27a" opacity="0.80"/><circle cx="182.5" cy="349.4" r="1.0" fill="#ffd27a" opacity="0.97"/><circle cx="264.9" cy="336.8" r="1.6" fill="#ffd27a" opacity="0.50"/><circle cx="271.6" cy="313.7" r="1.0" fill="#ffd27a" opacity="0.59"/><circle cx="302.2" cy="360.7" r="1.2" fill="#ffd27a" opacity="0.41"/><circle cx="243.2" cy="317.8" r="0.9" fill="#ffd27a" opacity="0.99"/><circle cx="387.9" cy="304.3" r="1.1" fill="#ffd27a" opacity="0.42"/><circle cx="326.2" cy="337.6" r="1.2" fill="#ffd27a" opacity="0.95"/><circle cx="328.8" cy="342.2" r="1.7" fill="#ffd27a" opacity="0.74"/><circle cx="305.6" cy="340.8" r="1.5" fill="#ffd27a" opacity="0.66"/><circle cx="168.0" cy="355.6" r="1.6" fill="#ffd27a" opacity="0.45"/><circle cx="312.6" cy="373.5" r="1.3" fill="#ffd27a" opacity="0.60"/><circle cx="308.2" cy="279.9" r="0.9" fill="#ffd27a" opacity="0.72"/><circle cx="264.5" cy="345.6" r="0.9" fill="#ffd27a" opacity="0.52"/><circle cx="258.2" cy="347.7" r="1.1" fill="#ffd27a" opacity="0.70"/><circle cx="238.7" cy="335.0" r="1.1" fill="#ffd27a" opacity="0.41"/><circle cx="341.9" cy="319.7" r="1.3" fill="#ffd27a" opacity="0.96"/></g>
+<circle cx="288" cy="356" r="5" fill="#ffffff"/>
+
+<g transform="translate(442 34)"><rect width="52" height="26" rx="3" fill="rgba(11,14,18,.9)" stroke="#b6f36a" stroke-opacity=".7"/><text x="26.0" y="17" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="600" fill="#f3f5f7" text-anchor="middle" letter-spacing="1">PLC</text></g>
+<g transform="translate(610 238)"><rect width="76" height="26" rx="3" fill="rgba(11,14,18,.9)" stroke="#b6f36a" stroke-opacity=".7"/><text x="38.0" y="17" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="600" fill="#f3f5f7" text-anchor="middle" letter-spacing="1">İZLEME</text></g>
+<g transform="translate(470 288)"><rect width="52" height="26" rx="3" fill="rgba(11,14,18,.9)" stroke="#b6f36a" stroke-opacity=".7"/><text x="26.0" y="17" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="600" fill="#f3f5f7" text-anchor="middle" letter-spacing="1">HMI</text></g>
+
+<rect width="760" height="540" fill="url(#vign)"/>
+</svg></div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <section class="strip" aria-label="Uzmanlık alanları">
+    <div class="wrap">
+      <ul>
+        <li><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3a19 19 0 1 1-13.4 5.6"/><path d="m16 16-6 6 6 6M28 16l6 6-6 6M24 13l-4 18"/></svg><div><h2>Yazılım Geliştirme</h2><p>Web, masaüstü ve mühendislik araçları.</p></div></li>
+        <li><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="36" height="28" rx="1.5"/><path d="M16 8v28M28 8v28M8 14h4M8 18h4M20 14h4M20 18h4M32 14h4M32 18h4"/><path d="M8 30h4M20 30h4M32 30h4" stroke-width="2.4"/></svg><div><h2>PLC &amp; Hareket Kontrolü</h2><p>Siemens, Schneider ve servo sistemler.</p></div></li>
+        <li><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 40h18M12 40v-5h10v5"/><circle cx="17" cy="30" r="3.5"/><path d="m19 27 7-12"/><circle cx="27" cy="12" r="3.5"/><path d="m30 13 6 6M36 19l-2 5M36 19l4 1"/></svg><div><h2>Robotik</h2><p>Endüstriyel robotlar ve kaynak sistemleri.</p></div></li>
+        <li><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="36" height="24" rx="1.5"/><path d="M15 39h14M22 31v8"/><path d="m9 25 7-7 5 4 8-9 6 5"/></svg><div><h2>Dijital Araçlar</h2><p>İzleme, veri görselleştirme ve özel uygulamalar.</p></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec" id="hizmetler" aria-labelledby="h-hizmet">
+    <div class="wrap">
+      <div class="head"><div><p class="kicker">Hizmetler</p><h2 id="h-hizmet">Neler yapıyorum?</h2></div></div>
+      <div class="services">
+        <article class="svc reveal">
+          <span class="num mono">01</span>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M9 4v16M15 4v16M5.5 8h1.5M11 8h1.5M17 8h1.5M5.5 16h1.5M11 16h1.5M17 16h1.5"/></svg></div>
+          <h3>PLC Programlama</h3>
+          <p>Schneider Modicon ve diğer PLC'ler için yazılım, revizyon ve arıza giderme.</p>
+          <ul><li>Yeni program ve revizyon</li><li>Arıza tespiti ve giderme</li><li>Servo ve sürücü entegrasyonu</li></ul>
+        </article>
+        <article class="svc reveal">
+          <span class="num mono">02</span>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21h10M7 21v-3h4v3"/><circle cx="9" cy="15.5" r="2"/><path d="m10.2 13.8 4-6.3"/><circle cx="15" cy="6" r="2"/><path d="m16.6 7 3 3M19.6 10l-1 3"/></svg></div>
+          <h3>Robotik Kaynak</h3>
+          <p>Robot kaynak hücrelerinin kurulumu, programlanması ve devreye alınması.</p>
+          <ul><li>Hücre kurulumu</li><li>Robot ve kaynak makinesi programlama</li><li>Devreye alma ve optimizasyon</li></ul>
+        </article>
+        <article class="svc reveal">
+          <span class="num mono">03</span>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/><path d="m6 13 3.5-3.5 2.5 2 4-4.5 2 1.5"/></svg></div>
+          <h3>İzleme Sistemleri</h3>
+          <p>Makinelerinizi ve kameralarınızı tek ekrandan, telefondan takip edin.</p>
+          <ul><li>Makine durumu ve üretim verisi</li><li>Kamera görüntüleri tek panelde</li><li>Telefondan güvenli erişim</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="oyunlar" aria-labelledby="h-oyun">
+    <div class="wrap">
+      <div class="head"><div><p class="kicker">Mola zamanı</p><h2 id="h-oyun">Mini Oyunlar</h2><p>Tarayıcıda çalışan küçük oyunlar. Takma adını seç, ortak skor tablosuna gir.</p></div></div>
+      <div class="games">
+        <article class="game featured reveal"><img src="img/kaynak-genis.webp" alt="" width="760" height="460" loading="lazy"><div><h3><a href="kaynak.html">Robot Kaynak</a></h3><p>Konveyörde akan parçaların kaynak dikişini tam torcun altındayken kaynakla. Mükemmel isabetlerle komboyu büyüt, ortak skor tablosunda yerini al.</p><ul class="tags"><li>Canvas</li><li>Skor tablosu</li></ul></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+        <article class="game reveal"><img src="img/plc.webp" alt="" width="112" height="112" loading="lazy"><div><h3><a href="plc.html">PLC Mantık Bulmacası</a></h3><p>AND, OR, NOT, XOR kapılarıyla devreyi kur, motoru çalıştır. 8 seviye.</p><ul class="tags"><li>SVG</li><li>Bulmaca</li></ul></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+        <article class="game reveal"><img src="img/yilan.webp" alt="" width="112" height="112" loading="lazy"><div><h3><a href="yilan.html">Yılan</a></h3><p>Klasik yılan oyunu. Ye, büyü, kuyruğunu ısırma.</p><ul class="tags"><li>Canvas</li><li>Skor tablosu</li></ul></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+        <article class="game reveal"><img src="img/drone.webp" alt="" width="112" height="112" loading="lazy"><div><h3><a href="drone.html">Uçan Drone</a></h3><p>Fabrikadaki boruların arasından drone'u geçir. Tek tuşla oynanır.</p><ul class="tags"><li>Canvas</li><li>Refleks</li></ul></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+        <article class="game reveal"><img src="img/2048.webp" alt="" width="112" height="112" loading="lazy"><div><h3><a href="2048.html">2048</a></h3><p>Aynı sayıları birleştir, 2048'e ulaşmaya çalış.</p><ul class="tags"><li>Bulmaca</li><li>Skor tablosu</li></ul></div><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="iletisim" aria-labelledby="h-ilet">
+    <div class="wrap">
+      <div class="contact reveal">
+        <div>
+          <h2 id="h-ilet">Bir projeniz ya da konuşmak istediğiniz bir makine mi var? <span>Yazın.</span></h2>
+          <p class="intro">Yazılım fikirleri, otomasyon soruları ya da bu sitede gördüğünüz herhangi bir şey.</p>
+        </div>
+        <div class="clist">
+          <a href="tel:+905347411114"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4.5-2 1.5a12 12 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></svg><span><small>Telefon</small><b>0534 741 11 14</b></span></a>
+          <a href="https://wa.me/905347411114?text=Merhaba%2C%20web%20sitenizden%20ula%C5%9F%C4%B1yorum." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.7 7.1L4 20l1-4A8 8 0 1 1 20 12z"/><path d="M9 10.5h6M9 13.5h4"/></svg><span><small>WhatsApp</small><b>Hemen mesaj yazın</b></span></a>
+          <a href="mailto:cansuzkadirhan@gmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg><span><small>E-posta</small><b>cansuzkadirhan@gmail.com</b></span></a>
+          <a href="https://github.com/kcansuz" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg><span><small>GitHub</small><b>github.com/kcansuz</b></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
 
 <footer>
-  <div class="wrap">© 2026 Kcansuz · Endüstriyel Otomasyon</div>
+  <div class="wrap">
+    <a href="#" class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true" style="width:28px;height:28px"><path d="M8 4h7v32H8z" fill="#b6f36a"/><path d="M15 21 29 4h8L22.5 21 37 36h-8.5z" fill="#b6f36a"/></svg>
+      <span><b style="font-size:.95rem">KADIRHAN CANSUZ</b><small>YAZILIM &amp; OTOMASYON</small></span>
+    </a>
+    <div class="fr">
+      <div class="fi">
+        <a href="mailto:cansuzkadirhan@gmail.com" aria-label="E-posta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg></a>
+        <a href="https://github.com/kcansuz" target="_blank" rel="noopener" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a>
+      </div>
+      <span>© 2026 Kadirhan Cansuz. Tüm hakları saklıdır.</span>
+    </div>
+  </div>
 </footer>
 
+<script>
+  // Kartlar ekrana girdikçe yumuşakça belirsin
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) { els.forEach(function (e) { e.classList.add('in'); }); return; }
+    var io = new IntersectionObserver(function (en) { en.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -6% 0px' });
+    els.forEach(function (e) { io.observe(e); });
+  })();
+</script>
 </body>
 </html>

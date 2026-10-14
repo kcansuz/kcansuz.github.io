@@ -6,7 +6,7 @@
 <title>Robot Kaynak | Kcansuz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0d1117;--panel:#161b22;--line:#2a313c;--text:#e6edf3;--muted:#8b949e;--accent:#f5a524;--accent2:#2ea043;--red:#f85149}
+  :root{--bg:#0d1117;--panel:#161b22;--line:#2a313c;--text:#e6edf3;--muted:#8b949e;--accent:#b6f36a;--accent2:#b6f36a;--red:#f85149}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh}
   a{color:inherit;text-decoration:none}
@@ -49,7 +49,7 @@
   .board li:first-child{border-top:0}
   .board li .r{color:var(--muted)}
   .board li .s{color:var(--accent)}
-  .board li.me{background:rgba(245,165,36,.08);border-radius:6px}
+  .board li.me{background:rgba(182,243,106,.08);border-radius:6px}
   .board .empty{color:var(--muted);font-size:.9rem}
   @media (max-width:560px){.overlay p.intro{display:none}.overlay h1{font-size:1.4rem}.overlay{gap:8px;padding:12px}}
 </style>
@@ -290,13 +290,13 @@ function weld() {
     const gain = 100 * combo;
     score += gain; combo = Math.min(combo + 1, 8);
     flash = 1; sparks(45, true);
-    popup('MÜKEMMEL +' + gain, '#f5a524');
+    popup('MÜKEMMEL +' + gain, '#b6f36a');
   } else if (target && bd <= GOOD) {
     target.state = 1; target.t = time;
     const gain = 50 * combo;
     score += gain; combo = Math.min(combo + 1, 8);
     flash = 0.7; sparks(22, true);
-    popup('İYİ +' + gain, '#2ea043');
+    popup('İYİ +' + gain, '#e6edf3');
   } else {
     sparks(8, false);
     miss(target && bd <= NEAR ? 'ISKA!' : 'BOŞA YAKTIN!');
@@ -345,7 +345,7 @@ function draw() {
   for (let y = 0; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
   // hedef çizgisi
-  ctx.strokeStyle = 'rgba(245,165,36,.25)';
+  ctx.strokeStyle = 'rgba(182,243,106,.25)';
   ctx.setLineDash([4, 6]);
   ctx.beginPath(); ctx.moveTo(TORCH_X, BELT_Y - 60); ctx.lineTo(TORCH_X, BELT_Y + 34); ctx.stroke();
   ctx.setLineDash([]);
@@ -368,9 +368,9 @@ function draw() {
     ctx.fillStyle = '#0d1117'; ctx.fillRect(x - 2, BELT_Y + 34, 4, 16);
   }
   // hedef bölge işareti
-  ctx.fillStyle = 'rgba(245,165,36,.35)';
+  ctx.fillStyle = 'rgba(182,243,106,.3)';
   ctx.fillRect(TORCH_X - GOOD, BELT_Y + 28, GOOD * 2, 6);
-  ctx.fillStyle = '#f5a524';
+  ctx.fillStyle = '#b6f36a';
   ctx.fillRect(TORCH_X - PERFECT, BELT_Y + 28, PERFECT * 2, 6);
 
   // parçalar
@@ -417,11 +417,11 @@ function draw() {
   ctx.lineCap = 'round';
   ctx.strokeStyle = '#30363d'; ctx.lineWidth = 26;
   ctx.beginPath(); ctx.moveTo(baseX, baseY); ctx.lineTo(elbowX, elbowY); ctx.lineTo(wristX, wristY); ctx.stroke();
-  ctx.strokeStyle = '#f5a524'; ctx.lineWidth = 18;
+  ctx.strokeStyle = '#c9d0d8'; ctx.lineWidth = 18;
   ctx.beginPath(); ctx.moveTo(baseX, baseY); ctx.lineTo(elbowX, elbowY); ctx.lineTo(wristX, wristY); ctx.stroke();
   for (const [jx, jy, r] of [[baseX, baseY, 18], [elbowX, elbowY, 14], [wristX, wristY, 10]]) {
     ctx.fillStyle = '#161b22'; ctx.beginPath(); ctx.arc(jx, jy, r, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#f5a524'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.strokeStyle = '#b6f36a'; ctx.lineWidth = 3; ctx.stroke();
   }
   // torç
   ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 8;

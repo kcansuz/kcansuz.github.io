@@ -148,7 +148,7 @@
     ctx.fillStyle = '#c9d1d9'; ctx.beginPath(); ctx.moveTo(-17, -2); ctx.lineTo(17, -2); ctx.lineTo(12, 8); ctx.lineTo(-12, 8); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#30363d'; ctx.fillRect(-9, 1, 18, 4);
     ctx.fillStyle = '#f5a524'; ctx.beginPath(); ctx.arc(8, 3, 2.2, 0, 7); ctx.fill();
-    ctx.fillStyle = (Math.floor(t * 4) % 2) ? '#2ea043' : '#1a3d22'; ctx.beginPath(); ctx.arc(-8, 3, 2, 0, 7); ctx.fill();
+    ctx.fillStyle = (Math.floor(t * 4) % 2) ? '#b6f36a' : '#2b3a1a'; ctx.beginPath(); ctx.arc(-8, 3, 2, 0, 7); ctx.fill();
     ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-8, 8); ctx.lineTo(-10, 13); ctx.moveTo(8, 8); ctx.lineTo(10, 13); ctx.stroke();
     ctx.restore();
   }
@@ -178,7 +178,7 @@
       ctx.textAlign = 'center'; ctx.font = '700 46px "JetBrains Mono", monospace'; ctx.fillStyle = 'rgba(230,237,243,.9)';
       ctx.fillText(score, W / 2, 80);
       if (!ready) { ctx.font = '500 14px "JetBrains Mono", monospace'; ctx.fillStyle = '#8b949e'; ctx.fillText('Uçmak için dokun ya da Boşluk', W / 2, 360); }
-      if (paused) { ctx.font = '700 26px Inter, sans-serif'; ctx.fillStyle = '#f5a524'; ctx.fillText('Duraklatıldı', W / 2, 300); }
+      if (paused) { ctx.font = '700 26px Inter, sans-serif'; ctx.fillStyle = '#b6f36a'; ctx.fillText('Duraklatıldı', W / 2, 300); }
     }
   }
   var last = performance.now();
