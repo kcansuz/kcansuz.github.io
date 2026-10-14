@@ -1,0 +1,20 @@
+/* Tüm sayfalarda ortak: yeşil K logosu, aynı genişlik, oyun sayfası düzeni */
+header .bar, header nav.wrap { max-width: 1200px; }
+header .bar { padding: 0 20px; height: 64px; }
+.brand { display: flex; align-items: center; gap: 12px; font-family: Inter, system-ui, sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: .14em; color: #e6edf3; white-space: nowrap; }
+.brand svg { width: 30px; height: 30px; flex: none; }
+.brand:hover { color: #fff; }
+.back { white-space: nowrap; }
+@media (max-width: 420px) { .brand { font-size: .82rem; letter-spacing: .08em; gap: 8px; } .brand svg { width: 26px; height: 26px; } }
+
+.game.layout { max-width: 1200px; margin: 0 auto; padding: 24px 20px 56px; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; }
+.layout .main { min-width: 0; width: 100%; justify-self: center; }
+.layout .side { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.layout .side > * { margin-top: 0 !important; }
+@media (max-width: 920px) {
+  .game.layout { grid-template-columns: 1fr; padding-top: 16px; }
+  .layout .side { position: static; }
+}
+
+/* Ana sayfadaki oyun kartları geniş ekranda tek sırada dursun */
+#oyunlar .grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }

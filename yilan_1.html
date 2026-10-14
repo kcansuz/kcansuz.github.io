@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yılan | Kcansuz</title>
+<meta name="description" content="Klasik yılan oyunu: klavye ve kaydırma kontrolü, ortak skor tablosu.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="oyun.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="ortak.css">
+<style>.layout .main{max-width:600px}</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a href="index.html" class="brand" aria-label="Ana sayfa"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 4h7v32H8z" fill="#b6f36a"/><path d="M15 21 29 4h8L22.5 21 37 36h-8.5z" fill="#b6f36a"/></svg><span>KADIRHAN CANSUZ</span></a>
+    <a href="index.html#oyunlar" class="back">← Tüm oyunlar</a>
+  </div>
+</header>
+
+<div class="game layout">
+<div class="main">
+  <div class="player" id="player"></div>
+  <div class="hud">
+    <div>PUAN <b id="score">0</b></div>
+    <div>UZUNLUK <b id="len">3</b></div>
+    <div>REKOR <b id="best">0</b></div>
+  </div>
+  <div class="stage">
+    <canvas id="c" aria-label="Yılan oyun tahtası" role="img"></canvas>
+    <div class="overlay" id="menu">
+      <h1>Yı<em>lan</em></h1>
+      <p>Yön tuşları ya da WASD ile oyna. Telefonda tahtada parmağını kaydır ya da alttaki butonları kullan. Yılan büyüdükçe hızlanır.</p>
+      <button class="btn" id="startBtn" type="button">Başla</button>
+    </div>
+    <div class="overlay" id="pause" hidden><h2>Durakla<em>tıldı</em></h2><button class="btn" id="resumeBtn" type="button">Devam et</button></div>
+    <div class="overlay" id="over" hidden>
+      <h2>Oyun <em>Bitti</em></h2>
+      <div class="big" id="final">0</div>
+      <p id="overMsg"></p>
+      <button class="btn" id="againBtn" type="button">Tekrar Oyna</button>
+    </div>
+  </div>
+  <div class="pad">
+    <button class="u" type="button" data-dir="up" aria-label="Yukarı">▲</button>
+    <button class="l" type="button" data-dir="left" aria-label="Sol">◀</button>
+    <button class="d" type="button" data-dir="down" aria-label="Aşağı">▼</button>
+    <button class="r" type="button" data-dir="right" aria-label="Sağ">▶</button>
+  </div>
+  <p class="help">Hareket: <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> · Duraklat: <kbd>P</kbd></p>
+</div>
+<aside class="side">
+  <section class="board"><h2>🏆 Skor tablosu <small id="boardNote"></small></h2><ol id="scoreList"></ol></section>
+</aside>
+</div>
+
+<script src="skor.js"></script>
+<script src="oyun-ortak.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var N = 20, CELL = 24, SIZE = N * CELL;
+  var cv = $('c'), ctx = cv.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = SIZE * dpr; cv.height = SIZE * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  var state = 'menu', snake, dir, queue, food, score = 0, best = 0, stepMs, acc = 0, last = 0, flash = 0;
+  var board = Oyun.board('yilan', $('scoreList'), $('boardNote'));
+  Oyun.playerLine($('player'));
+
+  function hud() { $('score').textContent = score; $('len').textContent = snake ? snake.length : 3; $('best').textContent = best; }
+  function placeFood() {
+    var free = [];
+    for (var x = 0; x < N; x++) for (var y = 0; y < N; y++) if (!snake.some(function (s) { return s[0] === x && s[1] === y; })) free.push([x, y]);
+    food = free[Math.floor(Math.random() * free.length)];
+  }
+  function reset() { snake = [[9, 10], [8, 10], [7, 10]]; dir = 'right'; queue = []; score = 0; stepMs = 130; acc = 0; placeFood(); hud(); }
+  function start() {
+    Oyun.requireNick().then(function () {
+      reset(); best = board.best(); hud(); state = 'play';
+      $('menu').hidden = true; $('over').hidden = true; $('pause').hidden = true;
+    });
+  }
+  function opposite(a, b) { return DIRS[a][0] === -DIRS[b][0] && DIRS[a][1] === -DIRS[b][1]; }
+  function turn(d) {
+    if (state !== 'play') return;
+    var lastDir = queue.length ? queue[queue.length - 1] : dir;
+    if (d !== lastDir && !opposite(d, lastDir) && queue.length < 3) queue.push(d);
+  }
+  function step() {
+    if (queue.length) dir = queue.shift();
+    var h = snake[0], nx = h[0] + DIRS[dir][0], ny = h[1] + DIRS[dir][1];
+    var eat = food && nx === food[0] && ny === food[1];
+    var body = eat ? snake : snake.slice(0, -1);
+    if (nx < 0 || ny < 0 || nx >= N || ny >= N || body.some(function (s) { return s[0] === nx && s[1] === ny; })) return end();
+    snake.unshift([nx, ny]);
+    if (eat) { score += 10; stepMs = Math.max(60, 130 - snake.length * 2); flash = 1; placeFood(); } else snake.pop();
+    hud();
+  }
+  function end() {
+    state = 'over'; $('final').textContent = score; $('overMsg').textContent = 'Skor kaydediliyor…';
+    best = Math.max(best, score); hud();
+    setTimeout(function () { $('over').hidden = false; $('againBtn').focus(); }, 300);
+    board.submit(score).then(function (r) { $('overMsg').textContent = r.msg; best = r.best; hud(); });
+  }
+  function pause(on) {
+    if (on && state === 'play') { state = 'paused'; $('pause').hidden = false; }
+    else if (!on && state === 'paused') { state = 'play'; $('pause').hidden = true; }
+  }
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.fill(); }
+  function draw() {
+    for (var x = 0; x < N; x++) for (var y = 0; y < N; y++) { ctx.fillStyle = (x + y) % 2 ? '#0f141a' : '#0d1117'; ctx.fillRect(x * CELL, y * CELL, CELL, CELL); }
+    if (!snake) return;
+    var fx = food[0] * CELL + CELL / 2, fy = food[1] * CELL + CELL / 2;
+    ctx.fillStyle = 'rgba(245,165,36,.18)'; ctx.beginPath(); ctx.arc(fx, fy, CELL * .7, 0, 7); ctx.fill();
+    ctx.fillStyle = '#f5a524'; ctx.beginPath(); ctx.arc(fx, fy, CELL * .32, 0, 7); ctx.fill();
+    snake.forEach(function (s, i) {
+      var k = 1 - i / (snake.length + 6);
+      ctx.fillStyle = i === 0 ? '#56d364' : 'rgba(46,160,67,' + (0.4 + 0.6 * k).toFixed(2) + ')';
+      var p = i === 0 ? 2 : 3; rr(s[0] * CELL + p, s[1] * CELL + p, CELL - p * 2, CELL - p * 2, 5);
+    });
+    var h = snake[0], d = DIRS[dir], ex = h[0] * CELL + CELL / 2 + d[0] * 5, ey = h[1] * CELL + CELL / 2 + d[1] * 5;
+    ctx.fillStyle = '#0d1117'; ctx.beginPath(); ctx.arc(ex - d[1] * 4, ey - d[0] * 4, 2, 0, 7); ctx.arc(ex + d[1] * 4, ey + d[0] * 4, 2, 0, 7); ctx.fill();
+    if (flash > 0) { ctx.strokeStyle = 'rgba(245,165,36,' + flash * .5 + ')'; ctx.lineWidth = 3; ctx.strokeRect(1.5, 1.5, SIZE - 3, SIZE - 3); }
+  }
+  function loop(now) {
+    var dt = Math.min(100, now - (last || now)); last = now;
+    if (state === 'play') { acc += dt; while (acc >= stepMs && state === 'play') { acc -= stepMs; step(); } }
+    flash = Math.max(0, flash - dt / 300); draw(); requestAnimationFrame(loop);
+  }
+  var KEYS = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
+  window.addEventListener('keydown', function (e) {
+    if (Oyun.isTyping()) return;
+    if (KEYS[e.code]) { if (state === 'play') { e.preventDefault(); turn(KEYS[e.code]); } return; }
+    if (e.code === 'KeyP' || e.code === 'Escape') { pause(state === 'play'); return; }
+    if (e.code === 'Space' || e.code === 'Enter') {
+      var el = document.activeElement; if (el && el.tagName === 'BUTTON') return;
+      e.preventDefault(); if (state === 'menu' || state === 'over') start(); else if (state === 'paused') pause(false);
+    }
+  });
+  var sx = 0, sy = 0;
+  cv.addEventListener('touchstart', function (e) { var p = e.touches[0]; sx = p.clientX; sy = p.clientY; }, { passive: true });
+  cv.addEventListener('touchmove', function (e) {
+    if (state !== 'play') return; e.preventDefault();
+    var p = e.touches[0], dx = p.clientX - sx, dy = p.clientY - sy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up')); sx = p.clientX; sy = p.clientY;
+  }, { passive: false });
+  document.querySelectorAll('[data-dir]').forEach(function (b) { b.addEventListener('pointerdown', function (e) { e.preventDefault(); turn(b.getAttribute('data-dir')); }); });
+  $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
+  $('resumeBtn').addEventListener('click', function () { pause(false); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) pause(true); });
+  document.addEventListener('nickchange', function () { best = board.best(); hud(); });
+  reset(); board.refresh().then(function () { best = board.best(); hud(); });
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
