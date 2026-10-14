@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elektrik Hesaplama Araçları — Kadirhan Cansuz</title>
+<meta name="description" content="Monofaze ve trifaze akım-güç hesabı, kablo kesiti ve gerilim düşümü, motor koruma şalteri ve kontaktör seçimi, yıldız-üçgen, kompanzasyon ve kW-HP çevirici.">
+<meta name="theme-color" content="#0b0e12">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0e12;--bg-2:#0f1318;--surface:#12171d;--surface-2:#171d24;--line:#222932;--line-2:#2d3540;--text:#f3f5f7;--text-2:#a9b2bf;--text-3:#788291;--accent:#b6f36a;--accent-ink:#0b0e12;--warn:#e8c35a;--bad:#ff6b5e;--mono:"JetBrains Mono",ui-monospace,monospace}
+  *,*::before,*::after{box-sizing:border-box}*{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button,input,select{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+  header{border-bottom:1px solid var(--line)}
+  .bar{max-width:1200px;margin:0 auto;padding:0 20px;height:64px;display:flex;align-items:center;justify-content:space-between}
+  .back{color:var(--text-2);font-size:.95rem}.back:hover{color:var(--text)}
+
+  .page{max-width:1200px;margin:0 auto;padding:40px 20px 72px}
+  .kicker{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-size:clamp(1.9rem,1.4rem + 2vw,2.8rem);letter-spacing:-.03em;font-weight:600;line-height:1.1;margin:10px 0 10px}
+  .intro{color:var(--text-2);max-width:70ch}
+
+  .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;margin-top:32px;align-items:start}
+  .tabs{display:flex;flex-direction:column;gap:6px;position:sticky;top:20px}
+  .tab{display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--bg-2);color:var(--text-2);cursor:pointer;transition:border-color .15s,color .15s}
+  .tab svg{width:20px;height:20px;flex:none;color:var(--text-3)}
+  .tab:hover{color:var(--text);border-color:var(--line-2)}
+  .tab[aria-selected="true"]{color:var(--text);border-color:var(--accent);background:rgba(182,243,106,.06)}
+  .tab[aria-selected="true"] svg{color:var(--accent)}
+  @media (max-width:880px){.layout{grid-template-columns:1fr}.tabs{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px}.tab{flex:none}}
+
+  .panel{border:1px solid var(--line);border-radius:12px;background:var(--bg-2);padding:28px}
+  .panel[hidden]{display:none}
+  .panel h2{font-size:1.35rem;font-weight:600;letter-spacing:-.01em}
+  .panel .desc{color:var(--text-2);font-size:.95rem;margin:6px 0 22px;max-width:70ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+  .f label{display:block;font-size:.8rem;color:var(--text-2);margin-bottom:6px;font-weight:500}
+  .f input,.f select{width:100%;height:44px;padding:0 12px;background:var(--bg);border:1px solid var(--line-2);border-radius:8px;font-family:var(--mono);font-size:.95rem}
+  .f select{font-family:Inter,sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9b2bf' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:16px;padding-right:34px}
+  .f input:focus,.f select:focus{outline:none;border-color:var(--accent)}
+  .f .unit{position:relative}
+  .f .unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:.8rem;color:var(--text-3);pointer-events:none}
+  .f .unit input{padding-right:54px}
+  .seg{display:flex;border:1px solid var(--line-2);border-radius:8px;padding:3px;height:44px}
+  .seg button{flex:1;border:0;background:none;border-radius:6px;color:var(--text-2);cursor:pointer;font-size:.9rem}
+  .seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--accent)}
+  .span2{grid-column:span 2}@media (max-width:520px){.span2{grid-column:auto}}
+
+  .results{margin-top:24px;border-top:1px solid var(--line);padding-top:22px}
+  .res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .res{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .res.main{border-color:rgba(182,243,106,.55);background:rgba(182,243,106,.05)}
+  .res small{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+  .res b{display:block;font-family:var(--mono);font-size:1.5rem;font-weight:600;margin-top:6px;color:var(--text)}
+  .res.main b{color:var(--accent)}
+  .res em{display:block;font-style:normal;color:var(--text-2);font-size:.85rem;margin-top:4px}
+  .formula{margin-top:16px;font-family:var(--mono);font-size:.85rem;color:var(--text-2);background:var(--bg);border:1px dashed var(--line-2);border-radius:8px;padding:12px 14px;line-height:1.7;overflow-x:auto}
+  .formula b{color:var(--text);font-weight:600}
+  .note{margin-top:14px;font-size:.88rem;color:var(--text-2);display:flex;gap:10px;align-items:flex-start}
+  .note::before{content:"!";flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:700;background:rgba(232,195,90,.15);color:var(--warn)}
+  .note.ok::before{content:"✓";background:rgba(182,243,106,.15);color:var(--accent)}
+  .note.bad::before{background:rgba(255,107,94,.15);color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);font-weight:600}
+  td{font-family:var(--mono)}
+  tr.pick td{color:var(--accent)}
+  .tablewrap{overflow-x:auto}
+  .link-btn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-size:.88rem;color:var(--accent);background:none;border:0;cursor:pointer;padding:0}
+  .link-btn span{border-bottom:1px solid rgba(182,243,106,.5)}
+
+  .disclaimer{margin-top:28px;border:1px solid rgba(232,195,90,.35);background:rgba(232,195,90,.05);border-radius:10px;padding:16px 18px;color:var(--text-2);font-size:.9rem}
+  .disclaimer b{color:var(--warn)}
+</style>
+<link rel="stylesheet" href="ortak.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a href="index.html" class="brand" aria-label="Ana sayfa"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 4h7v32H8z" fill="#b6f36a"/><path d="M15 21 29 4h8L22.5 21 37 36h-8.5z" fill="#b6f36a"/></svg><span>KADIRHAN CANSUZ</span></a>
+    <a href="index.html" class="back">← Ana sayfa</a>
+  </div>
+</header>
+
+<main class="page">
+  <p class="kicker">Mühendislik araçları</p>
+  <h1>Elektrik hesaplama araçları</h1>
+  <p class="intro">Monofaze ve trifaze sistemler için akım, güç, kablo kesiti, motor koruma, kontaktör, yıldız-üçgen ve kompanzasyon hesapları. Değerleri değiştirdikçe sonuçlar anında güncellenir.</p>
+
+  <div class="layout">
+    <div class="tabs" role="tablist" aria-label="Hesaplamalar">
+      <button class="tab" role="tab" id="t-akim" aria-controls="p-akim" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Akım / Güç</button>
+      <button class="tab" role="tab" id="t-kablo" aria-controls="p-kablo" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4M17 12h4"/><rect x="7" y="8" width="10" height="8" rx="4"/><path d="M10 12h4"/></svg>Kablo kesiti</button>
+      <button class="tab" role="tab" id="t-motor" aria-controls="p-motor" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9 15V9l3 4 3-4v6"/></svg>Motor koruma &amp; kontaktör</button>
+      <button class="tab" role="tab" id="t-komp" aria-controls="p-komp" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M10 4v16M14 4v16M4 12h6M14 12h6"/></svg>Kompanzasyon</button>
+      <button class="tab" role="tab" id="t-cevir" aria-controls="p-cevir" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>kW ↔ HP</button>
+    </div>
+
+    <div>
+      <!-- AKIM / GÜÇ -->
+      <section class="panel" id="p-akim" role="tabpanel" aria-labelledby="t-akim">
+        <h2>Akım / Güç hesabı</h2>
+        <p class="desc">Güçten hat akımını ya da akımdan gücü hesaplar. Motorlar için verim (η) girilirse etiketteki mil gücünden şebekeden çekilen akım bulunur.</p>
+        <div class="grid">
+          <div class="f"><label>Sistem</label><div class="seg" data-seg="a-faz"><button type="button" data-v="3" aria-pressed="true">Trifaze</button><button type="button" data-v="1" aria-pressed="false">Monofaze</button></div></div>
+          <div class="f"><label>Hesap</label><div class="seg" data-seg="a-mod"><button type="button" data-v="p2i" aria-pressed="true">Güç → Akım</button><button type="button" data-v="i2p" aria-pressed="false">Akım → Güç</button></div></div>
+          <div class="f" id="a-p-wrap"><label for="a-p">Güç (P)</label><div class="unit"><input id="a-p" type="number" min="0" step="any" value="7.5" inputmode="decimal"><span>kW</span></div></div>
+          <div class="f" id="a-i-wrap" hidden><label for="a-i">Akım (I)</label><div class="unit"><input id="a-i" type="number" min="0" step="any" value="15" inputmode="decimal"><span>A</span></div></div>
+          <div class="f"><label for="a-u">Gerilim (U)</label><div class="unit"><input id="a-u" type="number" min="0" step="any" value="400" inputmode="decimal"><span>V</span></div></div>
+          <div class="f"><label for="a-cos">Güç faktörü (cos φ)</label><input id="a-cos" type="number" min="0.1" max="1" step="0.01" value="0.85" inputmode="decimal"></div>
+          <div class="f"><label for="a-eta">Verim (η)</label><div class="unit"><input id="a-eta" type="number" min="1" max="100" step="any" value="90" inputmode="decimal"><span>%</span></div></div>
+        </div>
+        <div class="results" aria-live="polite"><div class="res-grid" id="a-res"></div><div class="formula" id="a-f"></div></div>
+      </section>
+
+      <!-- KABLO -->
+      <section class="panel" id="p-kablo" role="tabpanel" aria-labelledby="t-kablo" hidden>
+        <h2>Kablo kesiti ve gerilim düşümü</h2>
+        <p class="desc">Bakır, PVC yalıtımlı kablo için akım taşıma kapasitesine ve izin verilen gerilim düşümüne göre en küçük uygun kesiti seçer. Ortam sıcaklığı ve gruplama düzeltmeleri uygulanır.</p>
+        <div class="grid">
+          <div class="f"><label>Sistem</label><div class="seg" data-seg="k-faz"><button type="button" data-v="3" aria-pressed="true">Trifaze</button><button type="button" data-v="1" aria-pressed="false">Monofaze</button></div></div>
+          <div class="f"><label for="k-i">Yük akımı (I)</label><div class="unit"><input id="k-i" type="number" min="0" step="any" value="15" inputmode="decimal"><span>A</span></div></div>
+          <div class="f"><label for="k-u">Gerilim (U)</label><div class="unit"><input id="k-u" type="number" min="0" step="any" value="400" inputmode="decimal"><span>V</span></div></div>
+          <div class="f"><label for="k-l">Kablo uzunluğu (tek yön)</label><div class="unit"><input id="k-l" type="number" min="0" step="any" value="50" inputmode="decimal"><span>m</span></div></div>
+          <div class="f"><label for="k-cos">cos φ</label><input id="k-cos" type="number" min="0.1" max="1" step="0.01" value="0.85" inputmode="decimal"></div>
+          <div class="f"><label for="k-du">İzin verilen gerilim düşümü</label><div class="unit"><input id="k-du" type="number" min="0.1" max="20" step="0.1" value="3" inputmode="decimal"><span>%</span></div></div>
+          <div class="f span2"><label for="k-m">Döşeme şekli</label><select id="k-m">
+            <option value="B1">Duvar içinde / üstünde boru içinde tek damarlı (B1)</option>
+            <option value="B2">Duvar üstünde boru veya kanal içinde çok damarlı (B2)</option>
+            <option value="C" selected>Duvar veya tava üzerinde doğrudan, çok damarlı (C)</option>
+            <option value="D">Toprak altında boru içinde (D)</option>
+          </select></div>
+          <div class="f"><label for="k-t">Ortam sıcaklığı</label><select id="k-t">
+            <option value="25">25 °C</option><option value="30" selected>30 °C</option><option value="35">35 °C</option><option value="40">40 °C</option><option value="45">45 °C</option><option value="50">50 °C</option>
+          </select></div>
+          <div class="f"><label for="k-g">Yan yana devre sayısı</label><select id="k-g">
+            <option value="1" selected>1 (tek devre)</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="6">6</option><option value="9">9</option>
+          </select></div>
+        </div>
+        <div class="results" aria-live="polite">
+          <div class="res-grid" id="k-res"></div>
+          <div id="k-notes"></div>
+          <div class="tablewrap"><table id="k-table"></table></div>
+          <div class="formula" id="k-f"></div>
+        </div>
+      </section>
+
+      <!-- MOTOR -->
+      <section class="panel" id="p-motor" role="tabpanel" aria-labelledby="t-motor" hidden>
+        <h2>Motor koruma şalteri ve kontaktör seçimi</h2>
+        <p class="desc">Motorun nominal akımına göre motor koruma şalteri ayar aralığı, termik röle ve AC-3 kontaktör seçer. Yıldız-üçgen yol vermede her kontaktör ve termik ayarı ayrı hesaplanır.</p>
+        <div class="grid">
+          <div class="f"><label>Sistem</label><div class="seg" data-seg="m-faz"><button type="button" data-v="3" aria-pressed="true">Trifaze</button><button type="button" data-v="1" aria-pressed="false">Monofaze</button></div></div>
+          <div class="f" id="m-yol-wrap"><label>Yol verme</label><div class="seg" data-seg="m-yol"><button type="button" data-v="dol" aria-pressed="true">Direkt</button><button type="button" data-v="yd" aria-pressed="false">Yıldız-üçgen</button></div></div>
+          <div class="f"><label>Giriş</label><div class="seg" data-seg="m-giris"><button type="button" data-v="kw" aria-pressed="true">Güç (kW)</button><button type="button" data-v="a" aria-pressed="false">Etiket akımı</button></div></div>
+          <div class="f" id="m-p-wrap"><label for="m-p">Motor gücü (mil)</label><div class="unit"><input id="m-p" type="number" min="0" step="any" value="11" inputmode="decimal"><span>kW</span></div></div>
+          <div class="f" id="m-in-wrap" hidden><label for="m-in">Etiket akımı (Iₙ)</label><div class="unit"><input id="m-in" type="number" min="0" step="any" value="21" inputmode="decimal"><span>A</span></div></div>
+          <div class="f"><label for="m-u">Şebeke gerilimi</label><div class="unit"><input id="m-u" type="number" min="0" step="any" value="400" inputmode="decimal"><span>V</span></div></div>
+          <div class="f m-kw"><label for="m-cos">cos φ</label><input id="m-cos" type="number" min="0.1" max="1" step="0.01" value="0.85" inputmode="decimal"></div>
+          <div class="f m-kw"><label for="m-eta">Verim (η)</label><div class="unit"><input id="m-eta" type="number" min="1" max="100" step="any" value="90" inputmode="decimal"><span>%</span></div></div>
+        </div>
+        <div class="results" aria-live="polite">
+          <div class="res-grid" id="m-res"></div>
+          <div id="m-notes"></div>
+          <div class="formula" id="m-f"></div>
+          <button class="link-btn" type="button" id="m-to-cable"><span>Bu akımla kablo kesitini hesapla</span> →</button>
+        </div>
+      </section>
+
+      <!-- KOMPANZASYON -->
+      <section class="panel" id="p-komp" role="tabpanel" aria-labelledby="t-komp" hidden>
+        <h2>Kompanzasyon (reaktif güç) hesabı</h2>
+        <p class="desc">Mevcut güç faktörünü hedef değere çıkarmak için gereken kondansatör gücünü hesaplar.</p>
+        <div class="grid">
+          <div class="f"><label for="c-p">Aktif güç (P)</label><div class="unit"><input id="c-p" type="number" min="0" step="any" value="100" inputmode="decimal"><span>kW</span></div></div>
+          <div class="f"><label for="c-c1">Mevcut cos φ₁</label><input id="c-c1" type="number" min="0.1" max="1" step="0.01" value="0.75" inputmode="decimal"></div>
+          <div class="f"><label for="c-c2">Hedef cos φ₂</label><input id="c-c2" type="number" min="0.1" max="1" step="0.01" value="0.98" inputmode="decimal"></div>
+        </div>
+        <div class="results" aria-live="polite"><div class="res-grid" id="c-res"></div><div id="c-notes"></div><div class="formula" id="c-f"></div></div>
+      </section>
+
+      <!-- ÇEVİRİCİ -->
+      <section class="panel" id="p-cevir" role="tabpanel" aria-labelledby="t-cevir" hidden>
+        <h2>kW ↔ HP çevirici</h2>
+        <p class="desc">Motor etiketlerinde geçen kW, mekanik beygir gücü (HP) ve metrik beygir gücü (PS/BG) arasında çevirir. Herhangi bir kutuya yazın, diğerleri güncellenir.</p>
+        <div class="grid">
+          <div class="f"><label for="v-kw">Kilovat</label><div class="unit"><input id="v-kw" type="number" min="0" step="any" value="7.5" inputmode="decimal"><span>kW</span></div></div>
+          <div class="f"><label for="v-hp">Mekanik beygir gücü</label><div class="unit"><input id="v-hp" type="number" min="0" step="any" inputmode="decimal"><span>HP</span></div></div>
+          <div class="f"><label for="v-ps">Metrik beygir gücü</label><div class="unit"><input id="v-ps" type="number" min="0" step="any" inputmode="decimal"><span>PS</span></div></div>
+        </div>
+        <div class="formula">1 HP = 0,7457 kW · 1 PS (BG) = 0,7355 kW</div>
+      </section>
+
+      <div class="disclaimer"><b>Önemli:</b> Bu araçlar ön boyutlandırma ve kontrol amaçlıdır. Kablo tabloları IEC 60364-5-52'deki bakır, PVC yalıtımlı kablolar için referans değerlere dayanır; üretici katalogları, kısa devre ve seçicilik hesapları, yerel yönetmelikler ve tesisin gerçek koşulları dikkate alınarak son seçim yetkili bir elektrik mühendisince yapılmalıdır.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var SQ3 = Math.sqrt(3);
+  var num = function (id) { var v = parseFloat(String($(id).value).replace(',', '.')); return isFinite(v) ? v : NaN; };
+  var fmt = function (v, d) { if (!isFinite(v)) return '—'; return v.toLocaleString('tr-TR', { minimumFractionDigits: d === undefined ? 2 : d, maximumFractionDigits: d === undefined ? 2 : d }); };
+  var esc = function (s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+  function card(label, value, sub, main) { return '<div class="res' + (main ? ' main' : '') + '"><small>' + label + '</small><b>' + value + '</b>' + (sub ? '<em>' + sub + '</em>' : '') + '</div>'; }
+  function note(text, kind) { return '<p class="note' + (kind ? ' ' + kind : '') + '"><span>' + text + '</span></p>'; }
+
+  /* ---------- segment buttons ---------- */
+  var seg = {};
+  document.querySelectorAll('[data-seg]').forEach(function (g) {
+    var key = g.getAttribute('data-seg');
+    seg[key] = g.querySelector('[aria-pressed="true"]').getAttribute('data-v');
+    g.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      g.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      seg[key] = b.getAttribute('data-v');
+      onSeg(key); calcAll();
+    });
+  });
+  function onSeg(key) {
+    if (key === 'a-faz') $('a-u').value = seg['a-faz'] === '3' ? 400 : 230;
+    if (key === 'k-faz') $('k-u').value = seg['k-faz'] === '3' ? 400 : 230;
+    if (key === 'm-faz') { $('m-u').value = seg['m-faz'] === '3' ? 400 : 230; $('m-yol-wrap').hidden = seg['m-faz'] === '1'; }
+    if (key === 'a-mod') { $('a-p-wrap').hidden = seg['a-mod'] !== 'p2i'; $('a-i-wrap').hidden = seg['a-mod'] === 'p2i'; }
+    if (key === 'm-giris') {
+      var kw = seg['m-giris'] === 'kw';
+      $('m-p-wrap').hidden = !kw; $('m-in-wrap').hidden = kw;
+      document.querySelectorAll('.m-kw').forEach(function (el) { el.hidden = !kw; });
+    }
+  }
+
+  /* ---------- tabs ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function selectTab(t, focus) {
+    tabs.forEach(function (x) {
+      var on = x === t;
+      x.setAttribute('aria-selected', String(on)); x.tabIndex = on ? 0 : -1;
+      $(x.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) t.focus();
+    if (history.replaceState) history.replaceState(null, '', '#' + t.id.slice(2));
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { selectTab(t); });
+    t.addEventListener('keydown', function (e) {
+      var n = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+      if (n) { e.preventDefault(); selectTab(tabs[(i + n + tabs.length) % tabs.length], true); }
+    });
+  });
+  function fromHash() { var t = $('t-' + location.hash.slice(1)); if (t) selectTab(t); }
+  fromHash(); window.addEventListener('hashchange', fromHash);
+
+  /* ---------- 1. Akım / Güç ---------- */
+  function calcAkim() {
+    var tri = seg['a-faz'] === '3', U = num('a-u'), cos = num('a-cos'), eta = num('a-eta') / 100;
+    var k = tri ? SQ3 : 1, html = '', f;
+    if (seg['a-mod'] === 'p2i') {
+      var P = num('a-p'), Pin = P / eta, I = Pin * 1000 / (k * U * cos), S = Pin / cos, Q = Math.sqrt(Math.max(S * S - Pin * Pin, 0));
+      html = card('Hat akımı', fmt(I) + ' A', tri ? 'Her fazda' : 'Faz iletkeninde', true) + card('Şebekeden çekilen güç', fmt(Pin) + ' kW', 'P / η') + card('Görünür güç', fmt(S) + ' kVA') + card('Reaktif güç', fmt(Q) + ' kVAr');
+      f = '<b>I</b> = P · 1000 / (' + (tri ? '√3 · ' : '') + 'U · cos φ · η) = ' + fmt(P) + ' · 1000 / (' + (tri ? '1,732 · ' : '') + fmt(U, 0) + ' · ' + fmt(cos) + ' · ' + fmt(eta) + ') = <b>' + fmt(I) + ' A</b>';
+    } else {
+      var Ii = num('a-i'), Pe = k * U * Ii * cos / 1000, Pm = Pe * eta, Se = k * U * Ii / 1000;
+      html = card('Aktif güç (şebeke)', fmt(Pe) + ' kW', '', true) + card('Mil gücü (η ile)', fmt(Pm) + ' kW', 'Motorlar için') + card('Görünür güç', fmt(Se) + ' kVA') + card('Reaktif güç', fmt(Math.sqrt(Math.max(Se * Se - Pe * Pe, 0))) + ' kVAr');
+      f = '<b>P</b> = ' + (tri ? '√3 · ' : '') + 'U · I · cos φ = ' + (tri ? '1,732 · ' : '') + fmt(U, 0) + ' · ' + fmt(Ii) + ' · ' + fmt(cos) + ' / 1000 = <b>' + fmt(Pe) + ' kW</b>';
+    }
+    $('a-res').innerHTML = html; $('a-f').innerHTML = f;
+  }
+
+  /* ---------- 2. Kablo ---------- */
+  // IEC 60364-5-52 referans akım taşıma kapasiteleri (A) — bakır, PVC (70 °C), 30 °C ortam / toprak 20 °C
+  var SIZES = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240];
+  var AMP = {
+    2: { B1: [17.5, 24, 32, 41, 57, 76, 101, 125, 151, 192, 232, 269, 300, 341, 400],
+         B2: [16.5, 23, 30, 38, 52, 69, 90, 111, 133, 168, 201, 232, 258, 294, 344],
+         C:  [19.5, 27, 36, 46, 63, 85, 112, 138, 168, 213, 258, 299, 344, 392, 461],
+         D:  [22, 29, 37, 46, 60, 77, 100, 120, 140, 173, 205, 233, 264, 296, 342] },
+    3: { B1: [15.5, 21, 28, 36, 50, 68, 89, 110, 134, 171, 207, 239, 262, 296, 346],
+         B2: [15, 20, 27, 34, 46, 62, 80, 99, 118, 149, 179, 206, 225, 255, 297],
+         C:  [17.5, 24, 32, 41, 57, 76, 96, 119, 144, 184, 223, 259, 299, 341, 403],
+         D:  [18, 24, 30, 38, 50, 64, 82, 98, 116, 143, 169, 192, 217, 243, 280] }
+  };
+  var TEMP = { 25: 1.03, 30: 1, 35: 0.94, 40: 0.87, 45: 0.79, 50: 0.71 };      // PVC, havada
+  var GROUP = { 1: 1, 2: 0.8, 3: 0.7, 4: 0.65, 6: 0.57, 9: 0.5 };            // demet halinde
+  var KAPPA = 56; // bakır iletkenlik, m/(Ω·mm²)
+
+  function calcKablo() {
+    var tri = seg['k-faz'] === '3', I = num('k-i'), U = num('k-u'), L = num('k-l'), cos = num('k-cos'), lim = num('k-du');
+    var method = $('k-m').value, t = +$('k-t').value, g = +$('k-g').value;
+    var loaded = tri ? 3 : 2, table = AMP[loaded][method];
+    var kt = method === 'D' ? 1 : TEMP[t], kg = GROUP[g], k = kt * kg;
+    var rows = '', pickAmp = -1, pickDrop = -1, pick = -1;
+    SIZES.forEach(function (s, i) {
+      var Iz = table[i] * k;
+      var du = (tri ? SQ3 : 2) * I * L * cos / (KAPPA * s), pct = du / U * 100;
+      var okA = Iz >= I, okU = pct <= lim;
+      if (okA && pickAmp < 0) pickAmp = i;
+      if (okU && pickDrop < 0) pickDrop = i;
+      if (okA && okU && pick < 0) pick = i;
+      rows += '<tr data-i="' + i + '"><td>' + fmt(s, s < 10 ? 1 : 0) + ' mm²</td><td>' + fmt(Iz, 1) + ' A</td><td>' + fmt(pct) + ' %</td><td>' + (okA ? '✓' : '✗') + ' / ' + (okU ? '✓' : '✗') + '</td></tr>';
+    });
+    var html, notes = '';
+    if (pick < 0) {
+      html = card('Önerilen kesit', '> 240 mm²', 'Tek kabloda karşılanamıyor', true);
+      notes = note('Bu akım ve uzunluk için 240 mm² yetersiz kalıyor. Paralel kablo, daha yüksek gerilim veya farklı döşeme şekli değerlendirilmeli.', 'bad');
+    } else {
+      var s = SIZES[pick], du = (tri ? SQ3 : 2) * I * L * cos / (KAPPA * s);
+      html = card('Önerilen kesit', fmt(s, s < 10 ? 1 : 0) + ' mm²', tri ? '3 faz (+ N, PE gerekiyorsa)' : 'Faz + nötr (+ PE)', true) +
+        card('Düzeltilmiş kapasite (I<sub>z</sub>)', fmt(table[pick] * k, 1) + ' A', 'Tablo ' + fmt(table[pick], table[pick] % 1 ? 1 : 0) + ' A × ' + fmt(k)) +
+        card('Gerilim düşümü', fmt(du / U * 100) + ' %', fmt(du, 1) + ' V');
+      var by = pickDrop > pickAmp ? 'gerilim düşümü' : 'akım taşıma kapasitesi';
+      notes = note('Kesiti belirleyen kriter: <b>' + by + '</b>.' + (pickDrop > pickAmp ? ' Akım için ' + fmt(SIZES[pickAmp], SIZES[pickAmp] < 10 ? 1 : 0) + ' mm² yeterli olsa da ' + fmt(L, 0) + ' m mesafede gerilim düşümü sınırı aşılıyor.' : ''), 'ok');
+      notes += note('Koruma elemanı anma akımı I<sub>b</sub> ≤ I<sub>n</sub> ≤ I<sub>z</sub> koşulunu sağlamalı: ' + fmt(I, 1) + ' A ≤ I<sub>n</sub> ≤ ' + fmt(table[pick] * k, 1) + ' A.');
+    }
+    $('k-res').innerHTML = html; $('k-notes').innerHTML = notes;
+    $('k-table').innerHTML = '<thead><tr><th>Kesit</th><th>I<sub>z</sub> (düzeltilmiş)</th><th>ΔU</th><th>Akım / ΔU</th></tr></thead><tbody>' + rows + '</tbody>';
+    if (pick >= 0) { var tr = $('k-table').querySelector('tr[data-i="' + pick + '"]'); if (tr) tr.className = 'pick'; }
+    $('k-f').innerHTML = '<b>ΔU</b> = ' + (tri ? '√3' : '2') + ' · I · L · cos φ / (κ · S) &nbsp;(κ<sub>Cu</sub> = 56 m/Ω·mm²)<br>' +
+      '<b>I<sub>z</sub></b> = I<sub>tablo</sub> · k<sub>sıcaklık</sub> (' + fmt(kt) + ') · k<sub>gruplama</sub> (' + fmt(kg) + ')' +
+      (method === 'D' ? '<br>Toprak altı için sıcaklık düzeltmesi uygulanmadı (20 °C toprak varsayıldı).' : '') +
+      '<br>Yüklü iletken sayısı: ' + loaded + ' · Reaktans ihmal edildi.';
+  }
+
+  /* ---------- 3. Motor ---------- */
+  var MPCB = [[0.1, 0.16], [0.16, 0.25], [0.25, 0.4], [0.4, 0.63], [0.63, 1], [1, 1.6], [1.6, 2.5], [2.5, 4], [4, 6.3], [6, 10], [9, 14], [13, 18], [17, 23], [20, 25], [24, 32], [30, 40], [37, 50], [48, 65], [55, 70], [63, 80], [80, 100]];
+  var CONT = [9, 12, 18, 25, 32, 38, 40, 50, 65, 80, 95, 115, 150, 185, 225, 265, 330, 400, 500, 630];
+  function mpcb(I) { for (var i = 0; i < MPCB.length; i++) if (I >= MPCB[i][0] && I <= MPCB[i][1]) return MPCB[i]; return null; }
+  function cont(I) { for (var i = 0; i < CONT.length; i++) if (CONT[i] >= I) return CONT[i]; return null; }
+  function rng(r) { return r ? fmt(r[0], r[0] < 1 ? 2 : (r[0] % 1 ? 1 : 0)) + ' – ' + fmt(r[1], r[1] < 1 ? 2 : (r[1] % 1 ? 1 : 0)) + ' A' : '> 100 A (kompakt şalter)'; }
+  var motorIn = 0;
+  function calcMotor() {
+    var tri = seg['m-faz'] === '3', U = num('m-u'), In;
+    var k = tri ? SQ3 : 1, f;
+    if (seg['m-giris'] === 'kw') {
+      var P = num('m-p'), cos = num('m-cos'), eta = num('m-eta') / 100;
+      In = P * 1000 / (k * U * cos * eta);
+      f = '<b>Iₙ</b> = P · 1000 / (' + (tri ? '√3 · ' : '') + 'U · cos φ · η) = ' + fmt(P) + ' · 1000 / (' + (tri ? '1,732 · ' : '') + fmt(U, 0) + ' · ' + fmt(cos) + ' · ' + fmt(eta) + ') = <b>' + fmt(In) + ' A</b>';
+    } else { In = num('m-in'); f = 'Etiket akımı kullanıldı: <b>Iₙ = ' + fmt(In) + ' A</b>'; }
+    motorIn = In;
+    var yd = tri && seg['m-yol'] === 'yd', html, notes = '';
+    if (!isFinite(In) || In <= 0) { $('m-res').innerHTML = ''; $('m-notes').innerHTML = ''; $('m-f').innerHTML = f; return; }
+    if (!yd) {
+      var r = mpcb(In), c = cont(In);
+      html = card('Motor akımı (Iₙ)', fmt(In) + ' A', tri ? 'Trifaze, direkt yol verme' : 'Monofaze', true) +
+        card('Motor koruma şalteri', rng(r), 'Ayar: ' + fmt(In, 1) + ' A') +
+        card('Termik röle', rng(r), 'Ayar: ' + fmt(In, 1) + ' A') +
+        card('Kontaktör (AC-3)', c ? c + ' A' : '> 630 A', 'Iₑ ≥ ' + fmt(In, 1) + ' A');
+      notes = note('Direkt yol vermede kalkış akımı tipik olarak Iₙ\'nin 6–8 katıdır (≈ ' + fmt(In * 6, 0) + '–' + fmt(In * 8, 0) + ' A). Motor koruma şalterinin manyetik açma değeri bu kalkışa göre seçilmiştir; uzun kalkışlı yüklerde sınıf 20/30 termik değerlendirilmelidir.');
+      if (tri && In > 30) notes += note('Bu güçte şebekeye etkisini azaltmak için yıldız-üçgen ya da yumuşak yol verici (soft starter) düşünülebilir.');
+    } else {
+      var Iph = In / SQ3, Is = In / 3;
+      html = card('Motor akımı (Iₙ)', fmt(In) + ' A', 'Hat akımı (üçgende)', true) +
+        card('Ana kontaktör (K1)', cont(Iph) + ' A', 'AC-3 ≥ 0,58 · Iₙ = ' + fmt(Iph, 1) + ' A') +
+        card('Üçgen kontaktör (K2)', cont(Iph) + ' A', 'AC-3 ≥ 0,58 · Iₙ = ' + fmt(Iph, 1) + ' A') +
+        card('Yıldız kontaktör (K3)', cont(Is) + ' A', 'AC-3 ≥ 0,33 · Iₙ = ' + fmt(Is, 1) + ' A') +
+        card('Termik röle (K1 çıkışında)', rng(mpcb(Iph)), 'Ayar: ' + fmt(Iph, 1) + ' A (0,58 · Iₙ)') +
+        card('Hat koruma şalteri', rng(mpcb(In)), 'Ayar: ' + fmt(In, 1) + ' A');
+      notes = note('Termik röle ana kontaktör çıkışında (sargı akımı) ise <b>0,58 · Iₙ</b>, şebeke tarafında ise <b>Iₙ</b> değerine ayarlanır.');
+      notes += note('Yıldızda kalkış akımı ve torku, direkt yol vermenin yaklaşık 1/3\'üdür. Motor 400 V şebekede <b>üçgen</b> çalışacak şekilde etiketlenmiş olmalı (ör. 400/690 V). 230/400 V etiketli motorlar 400 V şebekede yıldız-üçgenle çalıştırılamaz.');
+      notes += note('Motora giden 6 iletkenin her biri 0,58 · Iₙ = ' + fmt(Iph, 1) + ' A taşır; kablo kesitini bu akıma göre seçebilirsiniz.');
+    }
+    notes += note('Ayar aralıkları ve kontaktör değerleri tipik ürün serilerine göredir; seçilen üreticinin kataloğu ve koordinasyon tablolarıyla kontrol edin.');
+    $('m-res').innerHTML = html; $('m-notes').innerHTML = notes; $('m-f').innerHTML = f;
+  }
+  $('m-to-cable').addEventListener('click', function () {
+    var yd = seg['m-faz'] === '3' && seg['m-yol'] === 'yd';
+    $('k-i').value = (yd ? motorIn / SQ3 : motorIn).toFixed(1);
+    $('k-u').value = $('m-u').value;
+    var target = seg['m-faz'];
+    document.querySelectorAll('[data-seg="k-faz"] button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === target)); });
+    seg['k-faz'] = target;
+    calcAll(); selectTab($('t-kablo'), true);
+    $('p-kablo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ---------- 4. Kompanzasyon ---------- */
+  function calcKomp() {
+    var P = num('c-p'), c1 = num('c-c1'), c2 = num('c-c2');
+    var t1 = Math.tan(Math.acos(c1)), t2 = Math.tan(Math.acos(c2)), Qc = P * (t1 - t2);
+    var S1 = P / c1, S2 = P / c2, html, notes = '';
+    if (c2 <= c1) { html = card('Gerekli kondansatör', '—', '', true); notes = note('Hedef cos φ, mevcut değerden büyük olmalı.', 'bad'); }
+    else {
+      html = card('Gerekli kondansatör gücü', fmt(Qc, 1) + ' kVAr', '', true) + card('Görünür güç (önce)', fmt(S1, 1) + ' kVA') + card('Görünür güç (sonra)', fmt(S2, 1) + ' kVA', 'Azalma: %' + fmt((1 - S2 / S1) * 100, 1)) + card('Reaktif güç (önce → sonra)', fmt(P * t1, 1) + ' → ' + fmt(P * t2, 1), 'kVAr');
+      notes = note('Akım ve kayıplar, görünür güçteki azalmayla orantılı olarak düşer. Harmonikli tesislerde filtreli (reaktörlü) kompanzasyon gerekebilir.');
+    }
+    $('c-res').innerHTML = html; $('c-notes').innerHTML = notes;
+    $('c-f').innerHTML = '<b>Q<sub>c</sub></b> = P · (tan φ₁ − tan φ₂) = ' + fmt(P, 1) + ' · (' + fmt(t1, 3) + ' − ' + fmt(t2, 3) + ') = <b>' + fmt(Qc, 1) + ' kVAr</b>';
+  }
+
+  /* ---------- 5. Çevirici ---------- */
+  var HP = 0.7457, PS = 0.7355;
+  function conv(src) {
+    var kw;
+    if (src === 'v-kw') kw = num('v-kw'); else if (src === 'v-hp') kw = num('v-hp') * HP; else kw = num('v-ps') * PS;
+    if (!isFinite(kw)) return;
+    if (src !== 'v-kw') $('v-kw').value = +kw.toFixed(3);
+    if (src !== 'v-hp') $('v-hp').value = +(kw / HP).toFixed(3);
+    if (src !== 'v-ps') $('v-ps').value = +(kw / PS).toFixed(3);
+  }
+  ['v-kw', 'v-hp', 'v-ps'].forEach(function (id) { $(id).addEventListener('input', function () { conv(id); }); });
+
+  function calcAll() { calcAkim(); calcKablo(); calcMotor(); calcKomp(); }
+  document.querySelectorAll('.panel input, .panel select').forEach(function (el) { if (!/^v-/.test(el.id)) el.addEventListener('input', calcAll); });
+  calcAll(); conv('v-kw');
+})();
+</script>
+</body>
+</html>

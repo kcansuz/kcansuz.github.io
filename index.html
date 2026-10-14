@@ -139,6 +139,20 @@
   .game.featured .arrow{top:auto;bottom:18px;right:18px}
   @media (max-width:520px){.games{grid-template-columns:1fr}.game img{width:88px;height:88px}.game.featured{grid-row:auto}}
 
+  /* Hesaplama araçları */
+  .tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+  .tool{position:relative;display:flex;flex-direction:column;gap:8px;padding:22px;border:1px solid var(--line);border-radius:10px;background:var(--bg-2);transition:border-color .2s var(--ease),transform .25s var(--ease)}
+  .tool:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .tool .ic{width:42px;height:42px;border-radius:9px;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--accent);margin-bottom:8px}
+  .tool .ic svg{width:22px;height:22px}
+  .tool h3{font-size:1.05rem;font-weight:600}
+  .tool h3 a::after{content:"";position:absolute;inset:0}
+  .tool p{color:var(--text-2);font-size:.88rem;line-height:1.45}
+  .tool .arrow{top:18px;right:18px;width:32px;height:32px}
+  .tool:hover .arrow{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  @media (max-width:1040px){.tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:520px){.tools{grid-template-columns:1fr}}
+
   /* İletişim */
   .contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:32px 56px;align-items:center;padding:44px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(135deg,var(--bg-2),var(--bg))}
   .contact h2{font-size:clamp(1.6rem,1.2rem + 1.4vw,2.4rem);line-height:1.12;letter-spacing:-.025em;font-weight:600}
@@ -179,6 +193,7 @@
     </a>
     <nav class="menu" aria-label="Ana menü">
       <a href="#hizmetler">Hizmetler</a>
+      <a href="#hesaplama">Hesaplama</a>
       <a href="#oyunlar">Mini Oyunlar</a>
       <a href="#iletisim">İletişim</a>
     </nav>
@@ -316,6 +331,18 @@
           <p>Makinelerinizi ve kameralarınızı tek ekrandan, telefondan takip edin.</p>
           <ul><li>Makine durumu ve üretim verisi</li><li>Kamera görüntüleri tek panelde</li><li>Telefondan güvenli erişim</li></ul>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="hesaplama" aria-labelledby="h-hesap">
+    <div class="wrap">
+      <div class="head"><div><p class="kicker">Mühendislik araçları</p><h2 id="h-hesap">Hesaplama Araçları</h2><p>Monofaze ve trifaze sistemler için sahada işe yarayan hızlı hesaplar: akım, kablo kesiti, motor koruma, kontaktör, yıldız-üçgen ve kompanzasyon.</p></div></div>
+      <div class="tools">
+        <article class="tool reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><h3><a href="hesaplama.html#akim">Akım / Güç</a></h3><p>Güçten akım, akımdan güç. Monofaze ve trifaze, cos φ ve verim ile.</p><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+        <article class="tool reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4M17 12h4"/><rect x="7" y="8" width="10" height="8" rx="4"/><path d="M10 12h4"/></svg></div><h3><a href="hesaplama.html#kablo">Kablo Kesiti</a></h3><p>Akım taşıma kapasitesi ve gerilim düşümüne göre kesit seçimi.</p><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+        <article class="tool reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9 15V9l3 4 3-4v6"/></svg></div><h3><a href="hesaplama.html#motor">Motor &amp; Kontaktör</a></h3><p>Motor koruma şalteri, termik ve kontaktör seçimi. Direkt ve yıldız-üçgen.</p><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+        <article class="tool reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M10 4v16M14 4v16M4 12h6M14 12h6"/></svg></div><h3><a href="hesaplama.html#komp">Kompanzasyon</a></h3><p>cos φ iyileştirmek için gereken kondansatör gücü (kVAr).</p><span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
       </div>
     </div>
   </section>
