@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İlker Abi — Bir Dal Versene! | ENGILAV</title>
+<meta name="description" content="Ofiste paket avı başladı! İlker Abi'yle 90 saniyede çalışma arkadaşlarından kaç dal toplayabilirsin? ENGILAV mini oyunu.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="oyun.css">
+<style>
+  .stage{touch-action:none}
+  .stage .overlay{cursor:auto}
+  .hud div.warn b{color:#ff6b5e}
+  .ctlinfo{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;text-align:left;font-size:.85rem;color:var(--muted);max-width:340px}
+  .ctlinfo kbd{font-size:.78rem}
+  .bestline{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--muted)}
+  .bestline b{color:var(--accent)}
+  .rank{font-size:1.15rem;font-weight:800;color:var(--text)}
+  .stats{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--muted);line-height:1.7}
+  .stats b{color:var(--text)}
+  /* mobil kontroller */
+  .touch{display:none}
+  @media (hover:none),(pointer:coarse){.touch{display:block}}
+  .joy{position:absolute;left:14px;bottom:14px;width:112px;height:112px;border-radius:50%;background:rgba(13,17,23,.55);border:1px solid rgba(182,243,106,.35);z-index:3;touch-action:none}
+  .joy i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(182,243,106,.85);box-shadow:0 4px 14px rgba(0,0,0,.4);transition:transform .05s}
+  .ask{position:absolute;right:16px;bottom:24px;width:84px;height:84px;border-radius:50%;border:2px solid rgba(182,243,106,.5);background:rgba(13,17,23,.6);color:var(--accent);font-weight:800;font-size:.95rem;letter-spacing:.06em;z-index:3;touch-action:none}
+  .ask.ready{background:var(--accent);color:#0b0e12;border-color:var(--accent);box-shadow:0 0 0 6px rgba(182,243,106,.18)}
+  .pausebtn{position:absolute;right:10px;top:10px;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(13,17,23,.7);color:var(--text);z-index:3;font-weight:800}
+  .prow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;margin-bottom:10px}
+  .prow .player{margin-bottom:0}
+</style>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="ortak.css">
+<style>.layout .main{max-width:none}</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a href="index.html" class="brand" aria-label="ENGILAV — ana sayfa"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 4H35L32 11H13V16.5H24V23.5H13V29H32L35 36H11L4 29V11Z" fill="#b6f36a"/><circle cx="30" cy="20" r="3.5" fill="#b6f36a"/></svg><span class="wm"><b>ENGILAV</b><small>YAZILIM &amp; OTOMASYON</small></span></a>
+    <a href="index.html#oyunlar" class="back">← Tüm oyunlar</a>
+  </div>
+</header>
+
+<div class="game layout">
+<div class="main">
+  <div class="prow"><div class="player" id="player"></div><span id="muzik-yeri"></span></div>
+  <div class="hud">
+    <div id="hTime">SÜRE <b id="time">90</b></div>
+    <div>SİGARA <b id="cigs">0</b></div>
+    <div>PUAN <b id="score">0</b></div>
+    <div>BAŞARILI <b id="succ">0</b></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="İlker Abi ofis oyun alanı" role="img"></canvas>
+    <div class="touch">
+      <div class="joy" id="joy" aria-label="Hareket kolu"><i id="knob"></i></div>
+      <button class="ask" id="askBtn" type="button" aria-label="Bir dal iste">İSTE</button>
+      <button class="pausebtn" id="pauseBtn" type="button" aria-label="Duraklat">II</button>
+    </div>
+    <div class="overlay" id="menu">
+      <h1>İlker Abi — <em>Bir Dal Versene!</em></h1>
+      <p>90 saniyen var abi. Ofiste paket peşinde koş, çalışanları yakala ve en yüksek skoru yap!</p>
+      <div class="ctlinfo">
+        <span><kbd>W A S D</kbd> / <kbd>↑ ↓ ← →</kbd></span><span>Ofiste dolaş</span>
+        <span><kbd>E</kbd> / <kbd>Boşluk</kbd></span><span>Yakındaki çalışandan bir dal iste</span>
+        <span><kbd>Esc</kbd></span><span>Duraklat</span>
+        <span>Telefonda</span><span>Sol alttaki kolla yürü, <b>İSTE</b>'ye bas</span>
+      </div>
+      <p class="bestline">En iyi skorun: <b id="menuBest">0</b></p>
+      <button class="btn" id="startBtn" type="button">Başla</button>
+    </div>
+    <div class="overlay" id="over" hidden>
+      <h2>Mesai <em>Bitti</em></h2>
+      <div class="big" id="final">0</div>
+      <p class="rank" id="rank"></p>
+      <p class="stats" id="stats"></p>
+      <p id="overMsg"></p>
+      <button class="btn" id="againBtn" type="button">Tekrar Oyna</button>
+    </div>
+  </div>
+  <p class="help">Hareket: <kbd>W A S D</kbd> ya da yön tuşları · İste: <kbd>E</kbd> / <kbd>Boşluk</kbd> · Duraklat: <kbd>Esc</kbd></p>
+</div>
+<aside class="side">
+  <section class="board"><h2>🏆 Skor tablosu <small id="boardNote"></small></h2><ol id="scoreList"></ol></section>
+</aside>
+</div>
+
+<script src="skor.js"></script>
+<script src="oyun-ortak.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var T = 32, MW = 30, MH = 22, WORLD_W = MW * T, WORLD_H = MH * T, ROUND = 90;
+  var cv = $('c'), ctx = cv.getContext('2d'), stage = $('stage');
+  var viewW = 640, viewH = 480, zoom = 1, dpr = 1, camX = 0, camY = 0;
+
+  /* =============== HARİTA =============== */
+  // duvarlar (karo birimi): x, y, w, h, cam?
+  var WALLS = [
+    [0, 0, 30, 1], [0, 21, 30, 1], [0, 0, 1, 22], [29, 0, 1, 22],
+    [9, 1, 1, 6], [1, 7, 3, 1], [5, 7, 5, 1],                         // müdür odası (kapı 4,7)
+    [19, 1, 1, 3, 1], [19, 5, 1, 3, 1], [19, 8, 10, 1, 1],            // toplantı odası (kapı 19,4) cam
+    [20, 13, 9, 1], [20, 14, 1, 2], [20, 17, 1, 4],                   // mutfak (kapı 20,16)
+    [1, 15, 2, 1], [4, 15, 4, 1], [7, 16, 1, 5]                       // balkon (kapı 3,15)
+  ];
+  var ZONES = [ // zemin
+    { x: 1, y: 1, w: 8, h: 6, f: 'wood' }, { x: 20, y: 1, w: 9, h: 7, f: 'wood2' },
+    { x: 21, y: 14, w: 8, h: 7, f: 'tile' }, { x: 1, y: 16, w: 6, h: 5, f: 'balcony' }
+  ];
+  var furn = []; // engel olan eşyalar (piksel)
+  function F(type, tx, ty, tw, th, extra) { var o = { type: type, x: tx * T, y: ty * T, w: tw * T, h: th * T, block: true }; for (var k in extra || {}) o[k] = extra[k]; furn.push(o); return o; }
+  var DESKS = [[11, 4], [14, 4], [11, 8], [14, 8], [2, 10], [5, 10], [11, 12], [14, 12]];
+  DESKS.forEach(function (d) { F('desk', d[0], d[1], 2, 1); });
+  F('mdesk', 3, 3, 3, 1);
+  F('shelf', 1, 1, 2, 1); F('plant', 8, 1, 1, 1); F('plant', 10, 1, 1, 1); F('printer', 17, 1, 1, 1);
+  F('plant', 18, 6, 1, 1); F('cooler', 19, 11, 1, 1); F('plant', 1, 13, 1, 1);
+  F('mtable', 22, 3, 5, 2); F('tv', 23, 1, 3, 1, { block: false, flat: true });
+  F('counter', 21, 14, 4, 1); F('fridge', 27, 14, 2, 1); F('ktable', 23, 17, 2, 2);
+  F('sofa', 11, 20, 3, 1); F('ctable', 11, 18, 3, 1, { h: 22, y: 18 * T + 6 }); F('plant', 9, 20, 1, 1); F('plant', 16, 20, 1, 1);
+  F('ashtray', 3, 18, 1, 1, { w: 14, h: 14, x: 3 * T + 9, y: 18 * T + 9 }); F('bench', 4, 20, 2, 1); F('plant', 1, 16, 1, 1);
+  var wallRects = WALLS.map(function (w) { return { x: w[0] * T, y: w[1] * T, w: w[2] * T, h: w[3] * T, glass: !!w[4] }; });
+  var blockers = wallRects.concat(furn.filter(function (f) { return f.block; }));
+
+  // yol bulma ızgarası
+  var grid = [];
+  (function () {
+    for (var y = 0; y < MH; y++) { grid.push([]); for (var x = 0; x < MW; x++) grid[y].push(0); }
+    blockers.forEach(function (r) {
+      for (var y = Math.floor((r.y + 1) / T); y <= Math.floor((r.y + r.h - 1) / T); y++)
+        for (var x = Math.floor((r.x + 1) / T); x <= Math.floor((r.x + r.w - 1) / T); x++) if (grid[y]) grid[y][x] = 1;
+    });
+  })();
+  var WALKABLE = [];
+  for (var gy = 0; gy < MH; gy++) for (var gx = 0; gx < MW; gx++) if (!grid[gy][gx]) WALKABLE.push([gx, gy]);
+  function bfs(sx, sy, tx, ty) {
+    if (grid[ty] === undefined || grid[ty][tx]) return null;
+    var prev = new Int32Array(MW * MH).fill(-1), q = [sy * MW + sx], start = sy * MW + sx, goal = ty * MW + tx;
+    prev[start] = start;
+    for (var qi = 0; qi < q.length; qi++) {
+      var cur = q[qi]; if (cur === goal) break;
+      var cx = cur % MW, cy = (cur / MW) | 0;
+      var nb = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      for (var k = 0; k < 4; k++) {
+        var nx = cx + nb[k][0], ny = cy + nb[k][1];
+        if (nx < 0 || ny < 0 || nx >= MW || ny >= MH || grid[ny][nx]) continue;
+        var ni = ny * MW + nx; if (prev[ni] !== -1) continue; prev[ni] = cur; q.push(ni);
+      }
+    }
+    if (prev[goal] === -1) return null;
+    var path = [], c = goal;
+    while (c !== start) { path.push([(c % MW) * T + T / 2, ((c / MW) | 0) * T + T / 2]); c = prev[c]; }
+    return path.reverse();
+  }
+  function tileOf(px, py) { return [Math.max(0, Math.min(MW - 1, Math.floor(px / T))), Math.max(0, Math.min(MH - 1, Math.floor(py / T)))]; }
+  function nearestFree(tx, ty) {
+    if (grid[ty] && grid[ty][tx] === 0) return [tx, ty];
+    for (var r = 1; r < 4; r++) for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) {
+      var x = tx + dx, y = ty + dy; if (grid[y] && grid[y][x] === 0) return [x, y];
+    }
+    return [15, 15];
+  }
+
+  var POI = {
+    kahve: [[22, 15], [24, 15]], buzdolabi: [[27, 15]], mutfak: [[22, 18], [26, 18]], su: [[18, 11]],
+    yazici: [[17, 2]], toplanti: [[21, 2], [27, 2], [21, 5], [27, 5]], salon: [[12, 19], [10, 18]],
+    balkon: [[2, 17], [4, 17], [5, 18], [2, 19]]
+  };
+
+  /* =============== KARAKTERLER =============== */
+  var LINES = {
+    ver: ['Al abi ama son dalım!', 'Al abi, afiyet olsun.', 'Tamam abi, bir tane.', 'Al da git abi!'],
+    son: ['Al abi ama son dalım!'],
+    tekrar: ['Daha demin verdim abi!', 'Bugün de bana mı geldin?', 'Abi az önce aldın ya!'],
+    red: ['Abi kendi paketini alsana!', 'Yok abi, bende de yok.', 'Bugün de bana mı geldin?', 'Abi bir paket alsan artık?'],
+    birak: ['Yok abi, bıraktım ben!', 'Bıraktım abi, sen de bırak!', 'Sakız ister misin abi?'],
+    kac: ['İlker abi geliyor, saklayın paketleri!', 'Kaçaaar!', 'Toplantım var abi!'],
+    masa: ['Paketim masada kaldı, yakalarsan senin!'],
+    yakaladi: ['Tamam abi, yakaladın!', 'Peki abi, pes ediyorum.'],
+    bitti: ['Paket bitti abi, valla!', 'Bomboş abi, bak!'],
+    mudur: ['İlker, raporlar ne oldu?', 'Bir tane al, sonra işinin başına!'],
+    kaptim: ['Kaptım paketi!', 'Yetiştim, olmadı abi!']
+  };
+  var PEOPLE = [
+    { name: 'Müdür Bey', desk: 'm', kind: 'mudur', gen: .22, stock: 3, alert: .5, look: { skin: '#f0c8a0', hair: '#c9ccd1', style: 'short', shirt: '#1f2f4d', pants: '#1a2233', tie: '#b6f36a', glasses: true } },
+    { name: 'Ayşe', desk: 0, kind: 'comert', gen: .78, stock: 3, alert: .7, look: { skin: '#f3cfae', hair: '#6b3e26', style: 'long', shirt: '#2e9e6b', pants: '#2b3445' } },
+    { name: 'Can', desk: 1, kind: 'kacak', gen: .45, stock: 2, alert: 1.7, look: { skin: '#e8b894', hair: '#1e1e22', style: 'spiky', shirt: '#e2702a', pants: '#2b3445' } },
+    { name: 'Zeynep', desk: 2, kind: 'birakmis', gen: 0, stock: 0, alert: .25, look: { skin: '#f6d5b8', hair: '#3a2418', style: 'bun', shirt: '#7d4bb3', pants: '#2b3445', glasses: true } },
+    { name: 'Burak', desk: 3, kind: 'normal', gen: .55, stock: 2, alert: 1, look: { skin: '#d9a77f', hair: '#2a1a12', style: 'short', shirt: '#c0392b', pants: '#2b3445', beard: true } },
+    { name: 'Elif', desk: 4, kind: 'normal', gen: .5, stock: 2, alert: 1.25, look: { skin: '#f3cfae', hair: '#e2b84b', style: 'pony', shirt: '#1aa3a3', pants: '#2b3445' } },
+    { name: 'Hakan', desk: 5, kind: 'tiryaki', gen: .62, stock: 4, alert: .8, look: { skin: '#dcae88', hair: '#4a3a30', style: 'cap', shirt: '#7a5a3a', pants: '#2b3445', mustache: true } },
+    { name: 'Selin', desk: 6, kind: 'normal', gen: .5, stock: 2, alert: 1.1, look: { skin: '#f6d5b8', hair: '#b5452a', style: 'curly', shirt: '#e8c23a', pants: '#2b3445' } },
+    { name: 'Emre', desk: 7, kind: 'comert', gen: .66, stock: 2, alert: .9, look: { skin: '#e8b894', hair: '#2b1d14', style: 'short', shirt: '#2d6cdf', pants: '#2b3445', glasses: true } }
+  ];
+  var ILKER_LOOK = { skin: '#efc39b', hair: '#3b3330', style: 'bald', shirt: '#9cc3e6', pants: '#3a4150', tie: '#c0392b', mustache: true, belly: true };
+
+  var ilker, npcs, packs, bubbles, floats, puffs;
+  var state = 'menu', paused = false, t = 0, timeLeft = ROUND, score = 0, cigs = 0, succ = 0, caughtCount = 0, streak = 0, lastGive = -99;
+  var input = { up: false, down: false, left: false, right: false, jx: 0, jy: 0 };
+  var board = Oyun.board('ilker', $('scoreList'), $('boardNote'));
+  Oyun.playerLine($('player'));
+  var best = 0;
+
+  function rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function seatOf(p) {
+    if (p.desk === 'm') return { tile: [4, 2], x: 4 * T + 16, y: 3 * T - 3 };
+    var d = DESKS[p.desk]; return { tile: [d[0], d[1] - 1], x: d[0] * T + T, y: d[1] * T - 3 };
+  }
+  function makeNpcs() {
+    return PEOPLE.map(function (p) {
+      var s = seatOf(p);
+      return { p: p, name: p.name, look: p.look, x: s.x, y: s.y, seat: s, state: 'seat', timer: 3 + Math.random() * 10, path: null, dir: 'down', walk: 0, moving: false,
+        stock: p.stock, gen: p.gen, annoy: 0, cool: 0, lock: 0, alertT: 0, fleeT: 0, caught: false, icon: null, speed: 58 + Math.random() * 10, smoke: false };
+    });
+  }
+  function reset() {
+    ilker = { x: 15 * T + 16, y: 15 * T + 20, vx: 0, vy: 0, dir: 'down', walk: 0, moving: false, expr: 'normal', exprT: 0 };
+    npcs = makeNpcs(); packs = []; bubbles = []; floats = []; puffs = []; jobs = [];
+    timeLeft = ROUND; score = 0; cigs = 0; succ = 0; caughtCount = 0; streak = 0; lastGive = -99;
+    hud();
+  }
+  function hud() {
+    $('time').textContent = Math.ceil(timeLeft); $('cigs').textContent = cigs; $('score').textContent = score; $('succ').textContent = succ;
+    $('hTime').classList.toggle('warn', timeLeft <= 10 && state === 'play');
+  }
+  function progress() { return Math.min(1, (ROUND - timeLeft) / ROUND); }
+
+  function say(ent, text, dur) {
+    bubbles = bubbles.filter(function (b) { return b.ent !== ent; });
+    bubbles.push({ ent: ent, text: text, life: dur || 2.4 });
+  }
+  function float(x, y, text, color) { floats.push({ x: x, y: y, text: text, color: color, life: 1.3 }); }
+
+  /* =============== NPC DAVRANIŞI =============== */
+  function goTo(n, tile, st, speed) {
+    var from = tileOf(n.x, n.y), to = nearestFree(tile[0], tile[1]);
+    var path = bfs(from[0], from[1], to[0], to[1]);
+    if (!path) { var nf = nearestFree(from[0], from[1]); path = bfs(nf[0], nf[1], to[0], to[1]) || []; }
+    n.path = path; n.state = st; n.curSpeed = speed || n.speed;
+  }
+  function goSeat(n, st, speed) {
+    goTo(n, n.seat.tile, st || 'return', speed);
+    n.path.push([n.seat.x, n.seat.y]);
+  }
+  function pickPoi(n) {
+    var r = Math.random(), list;
+    if (n.p.kind === 'tiryaki' && r < .6) list = POI.balkon;
+    else if (n.p.kind === 'mudur') list = r < .5 ? POI.toplanti : POI.kahve;
+    else if (r < .18 && n.stock > 0 && n.p.kind !== 'birakmis') list = POI.balkon;
+    else list = rnd([POI.kahve, POI.buzdolabi, POI.mutfak, POI.su, POI.yazici, POI.toplanti, POI.salon]);
+    var tile = rnd(list);
+    goTo(n, tile, 'walk');
+    n.atBalcony = list === POI.balkon;
+  }
+  function flee(n) {
+    var bestT = null, bestS = -1;
+    for (var i = 0; i < 30; i++) {
+      var c = rnd(WALKABLE), px = c[0] * T + 16, py = c[1] * T + 16;
+      var s = Math.hypot(px - ilker.x, py - ilker.y) - .25 * Math.hypot(px - n.x, py - n.y);
+      if (s > bestS) { bestS = s; bestT = c; }
+    }
+    goTo(n, bestT, 'flee', 98 + progress() * 40);
+    n.fleeT = 4 + Math.random() * 2; n.icon = 'flee'; n.grace = .8;
+  }
+  function updateNpc(n, dt) {
+    n.lock = Math.max(0, n.lock - dt); n.grace = Math.max(0, (n.grace || 0) - dt);
+    if (n.cool > 0) n.cool = Math.max(0, n.cool - dt);
+    if (n.lock > 0) { n.moving = false; return; }
+    var dI = Math.hypot(n.x - ilker.x, n.y - ilker.y);
+
+    // İlker'i fark edip kaçma
+    var calm = n.state === 'seat' || n.state === 'walk' || n.state === 'idle' || n.state === 'return';
+    if (state === 'play' && calm && n.p.kind !== 'birakmis') {
+      var pr = progress(), R = (55 + 115 * pr) * n.p.alert * (n.cool > 0 ? .6 : 1);
+      if (dI < R && Math.random() < (.12 + .9 * pr) * n.p.alert * dt) { n.state = 'alert'; n.alertT = .45; n.icon = 'alert'; n.moving = false; if (Math.random() < .45) say(n, rnd(LINES.kac), 1.6); }
+    }
+    if (n.state === 'alert') { n.alertT -= dt; faceTo(n, ilker.x, ilker.y); if (n.alertT <= 0) flee(n); return; }
+
+    // yakalanma (kaçarken İlker yetişirse)
+    if (n.state === 'flee' && dI < 30 && n.grace <= 0 && state === 'play') {
+      n.state = 'caught'; n.timer = 1.6; n.caught = true; n.path = null; n.icon = null; n.moving = false; caughtCount++;
+      say(n, rnd(LINES.yakaladi), 1.6); faceTo(n, ilker.x, ilker.y); return;
+    }
+    if (n.state === 'caught') { n.timer -= dt; n.moving = false; if (n.timer <= 0) { n.caught = false; goSeat(n); } return; }
+
+    // yol takibi
+    if (n.path && n.path.length) {
+      var p = n.path[0], dx = p[0] - n.x, dy = p[1] - n.y, d = Math.hypot(dx, dy), sp = n.curSpeed * dt;
+      if (d <= sp) { n.x = p[0]; n.y = p[1]; n.path.shift(); }
+      else { n.x += dx / d * sp; n.y += dy / d * sp; }
+      n.moving = true; n.walk += sp * .18;
+      n.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      if (n.state === 'flee') { n.fleeT -= dt; if (n.fleeT <= 0) { n.icon = null; goSeat(n); } }
+      return;
+    }
+    n.moving = false;
+    // varış
+    if (n.state === 'walk') { n.state = 'idle'; n.timer = n.atBalcony ? 5 + Math.random() * 4 : 2.5 + Math.random() * 3.5; n.smoke = n.atBalcony && n.stock > 0; n.dir = 'down'; return; }
+    if (n.state === 'flee') { n.state = 'idle'; n.timer = 1.5 + Math.random() * 1.5; n.icon = null; return; }
+    if (n.state === 'race' || n.state === 'return') { n.state = 'seat'; n.timer = 6 + Math.random() * 9; n.dir = 'down'; n.icon = null;
+      if (n.raceFor) { var pk = packs.indexOf(n.raceFor); if (pk >= 0) { packs.splice(pk, 1); say(n, rnd(LINES.kaptim), 1.8); } n.raceFor = null; }
+      return; }
+    if (n.state === 'idle') { n.timer -= dt; if (n.timer <= 0) { n.smoke = false; goSeat(n); } return; }
+    if (n.state === 'seat') { n.timer -= dt; n.dir = 'down'; if (n.timer <= 0) pickPoi(n); }
+  }
+  function faceTo(e, x, y) { var dx = x - e.x, dy = y - e.y; e.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); }
+
+  /* =============== ETKİLEŞİM =============== */
+  function nearestNpc() {
+    var bestN = null, bd = 50;
+    npcs.forEach(function (n) { var d = Math.hypot(n.x - ilker.x, n.y - ilker.y); if (d < bd && n.lock <= 0 && n.state !== 'alert') { bd = d; bestN = n; } });
+    return bestN;
+  }
+  function interact() {
+    if (state !== 'play' || paused) return;
+    var n = nearestNpc(); if (!n) { setExpr('plead', .6); say(ilker, rnd(['Kimse yok mu ya?', 'Bir dal be...']), 1.2); return; }
+    faceTo(ilker, n.x, n.y); faceTo(n, ilker.x, ilker.y);
+    say(ilker, rnd(['Bir dal versene!', 'Bir dal var mı?', 'Abicim bir sigara?', 'Bir tane ver be!']), 1.3);
+    n.lock = 1.1; n.path = n.state === 'seat' ? null : n.path;
+    var wasCaught = n.caught;
+    var resume = function () { if (n.state === 'caught' || n.state === 'flee' || n.state === 'alert') { n.caught = false; goSeat(n); } };
+    if (n.p.kind === 'birakmis') { reply(n, rnd(LINES.birak), 'no'); n.annoy++; return resume(); }
+    if (n.cool > 0) {
+      reply(n, rnd(LINES.tekrar), 'no'); n.annoy++; streak = 0;
+      if (Math.random() < .35 + n.annoy * .1 && n.p.kind !== 'mudur') { n.lock = .6; later(function () { if (state === 'play' && n.state !== 'flee') flee(n); }, 650); }
+      else resume();
+      return;
+    }
+    if (n.stock <= 0) { reply(n, rnd(LINES.bitti), 'no'); streak = 0; return resume(); }
+    var pg = n.gen - n.annoy * .1 + (n.smoke ? .3 : 0) + (wasCaught ? .3 : 0);
+    pg = Math.max(.05, Math.min(.95, pg));
+    var r = Math.random();
+    if (r < pg) return give(n, wasCaught);
+    var deskOk = n.p.desk !== 'm' && n.state !== 'seat' && n.stock > 0 && Math.hypot(n.x - n.seat.x, n.y - n.seat.y) > 150 && Math.hypot(ilker.x - n.seat.x, ilker.y - n.seat.y) > 120 && !packs.some(function (p) { return p.owner === n; });
+    if (deskOk && r < pg + .18) {
+      reply(n, LINES.masa[0], 'race');
+      var pk = { x: n.seat.x + 10, y: n.seat.y + 12, owner: n, life: 12 }; packs.push(pk);
+      n.lock = .7; n.raceFor = pk; n.caught = false;
+      later(function () { if (state === 'play' && n.raceFor === pk) goSeat(n, 'race', 72 + progress() * 30); }, 700);
+      return;
+    }
+    if (r < pg + .38 && n.p.kind !== 'mudur') {
+      reply(n, rnd(LINES.kac), 'no'); n.annoy++; streak = 0; n.lock = .5;
+      later(function () { if (state === 'play') flee(n); }, 520); return;
+    }
+    reply(n, n.p.kind === 'mudur' ? LINES.mudur[0] : rnd(LINES.red), 'no'); n.annoy++; streak = 0; resume();
+  }
+  function reply(n, text, kind) {
+    later(function () { if (state !== 'play') return; say(n, text, 2.4); if (kind === 'no') setExpr('sad', 1.2); }, 380);
+  }
+  function give(n, wasCaught) {
+    var last = n.stock === 1;
+    n.stock--; n.cool = 22; n.annoy = Math.max(0, n.annoy - 1);
+    var pts = n.p.kind === 'mudur' ? 250 : 100;
+    if (wasCaught) pts += 50;
+    streak = (t - lastGive < 12) ? streak + 1 : 1; lastGive = t;
+    if (streak > 1) pts += 25 * (streak - 1);
+    score += pts; cigs++; succ++; n.caught = false;
+    var text = last ? LINES.son[0] : (n.p.kind === 'mudur' ? LINES.mudur[1] : rnd(LINES.ver));
+    later(function () {
+      if (state !== 'play') return;
+      say(n, text, 2.4); setExpr('happy', 1.8);
+      float(ilker.x, ilker.y - 50, '+' + pts + (wasCaught ? ' yakaladın!' : '') + (streak > 1 ? ' seri x' + streak : ''), '#b6f36a');
+      hud();
+    }, 380);
+    if (n.state === 'caught' || n.state === 'flee') { later(function () { if (state === 'play') goSeat(n); }, 900); }
+  }
+  function setExpr(e, d) { ilker.expr = e; ilker.exprT = d; }
+  // gecikmeli işler oyun döngüsünde çalışır; yeni turda temizlenir (eski zamanlayıcı birikmez)
+  var jobs = [];
+  function later(fn, ms) { jobs.push({ fn: fn, t: ms / 1000 }); }
+
+  /* =============== GÜNCELLEME =============== */
+  function collide(e, nx, ny) {
+    var hw = 11, hh = 6;
+    for (var i = 0; i < blockers.length; i++) {
+      var r = blockers[i];
+      if (nx + hw > r.x && nx - hw < r.x + r.w && ny > r.y && ny - hh < r.y + r.h) return true;
+    }
+    return nx - hw < 0 || nx + hw > WORLD_W || ny - hh < 0 || ny > WORLD_H;
+  }
+  function update(dt) {
+    t += dt;
+    floats.forEach(function (f) { f.y -= 26 * dt; f.life -= dt; }); floats = floats.filter(function (f) { return f.life > 0; });
+    bubbles.forEach(function (b) { b.life -= dt; }); bubbles = bubbles.filter(function (b) { return b.life > 0; });
+    puffs.forEach(function (p) { p.y -= 14 * dt; p.x += p.vx * dt; p.r += 6 * dt; p.life -= dt; }); puffs = puffs.filter(function (p) { return p.life > 0; });
+    if (state === 'menu') { npcs.forEach(function (n) { updateNpc(n, dt); }); return; }
+    if (state !== 'play' || paused) return;
+
+    for (var j = jobs.length - 1; j >= 0; j--) { jobs[j].t -= dt; if (jobs[j].t <= 0) { var job = jobs.splice(j, 1)[0]; job.fn(); } }
+    timeLeft -= dt;
+    if (timeLeft <= 0) { timeLeft = 0; hud(); return endGame(); }
+    if (Math.ceil(timeLeft) !== Math.ceil(timeLeft + dt)) hud();
+
+    // İlker hareketi
+    var ax = (input.right ? 1 : 0) - (input.left ? 1 : 0) + input.jx, ay = (input.down ? 1 : 0) - (input.up ? 1 : 0) + input.jy;
+    var m = Math.hypot(ax, ay); if (m > 1) { ax /= m; ay /= m; }
+    var SPD = 132;
+    ilker.vx += (ax * SPD - ilker.vx) * Math.min(1, dt * 14);
+    ilker.vy += (ay * SPD - ilker.vy) * Math.min(1, dt * 14);
+    var nx = ilker.x + ilker.vx * dt, ny = ilker.y + ilker.vy * dt;
+    if (!collide(ilker, nx, ilker.y)) ilker.x = nx; else ilker.vx = 0;
+    if (!collide(ilker, ilker.x, ny)) ilker.y = ny; else ilker.vy = 0;
+    ilker.moving = Math.hypot(ilker.vx, ilker.vy) > 12;
+    if (ilker.moving) { ilker.walk += Math.hypot(ilker.vx, ilker.vy) * dt * .14; if (m > .2) ilker.dir = Math.abs(ax) > Math.abs(ay) ? (ax > 0 ? 'right' : 'left') : (ay > 0 ? 'down' : 'up'); }
+    ilker.exprT = Math.max(0, ilker.exprT - dt); if (ilker.exprT === 0) ilker.expr = 'normal';
+    if (ilker.expr === 'happy' && Math.random() < dt * 5) puffs.push({ x: ilker.x + (ilker.dir === 'left' ? -12 : 12), y: ilker.y - 30, vx: (Math.random() - .5) * 8, r: 2, life: 1.2 });
+
+    npcs.forEach(function (n) {
+      updateNpc(n, dt);
+      if (n.smoke && n.state === 'idle' && Math.random() < dt * 2.5) puffs.push({ x: n.x + 8, y: n.y - 30, vx: (Math.random() - .5) * 8, r: 2, life: 1.4 });
+    });
+    // paketler
+    for (var i = packs.length - 1; i >= 0; i--) {
+      var pk = packs[i]; pk.life -= dt;
+      if (Math.hypot(pk.x - ilker.x, pk.y - ilker.y) < 36) {
+        packs.splice(i, 1); cigs += 2; succ++; score += 150; streak = 0;
+        if (pk.owner) { pk.owner.raceFor = null; pk.owner.stock = Math.max(0, pk.owner.stock - 1); pk.owner.cool = 22; say(pk.owner, rnd(['Of abi ya!', 'Hırsız var!', 'Ama abi!']), 1.8); }
+        setExpr('happy', 2); float(pk.x, pk.y - 30, '+150  paket! +2 dal', '#f5c542'); hud(); continue;
+      }
+      if (pk.life <= 0) packs.splice(i, 1);
+    }
+    // butonu vurgula
+    var near = nearestNpc(); $('askBtn').classList.toggle('ready', !!near);
+  }
+  function endGame() {
+    state = 'over'; paused = false;
+    var r = cigs <= 3 ? 'Abi bugün paket boş!' : cigs <= 8 ? 'Mahallenin tanıdığı!' : cigs <= 14 ? 'Ofisin paket avcısı!' : 'İlker Abi Efsanesi!';
+    $('final').textContent = score; $('rank').textContent = r;
+    $('stats').innerHTML = 'Toplanan sigara: <b>' + cigs + '</b> · Başarılı istek: <b>' + succ + '</b> · Yakalanan: <b>' + caughtCount + '</b>';
+    $('overMsg').textContent = 'Skor kaydediliyor…';
+    $('over').hidden = false; $('againBtn').focus(); hud();
+    board.submit(score).then(function (res) { $('overMsg').textContent = res.msg; best = res.best; $('menuBest').textContent = best; });
+  }
+  function start() {
+    Oyun.requireNick().then(function () {
+      reset(); state = 'play'; paused = false; $('menu').hidden = true; $('over').hidden = true; hud();
+      say(ilker, 'Bir dal bulmam lazım...', 1.8);
+    });
+  }
+
+  /* =============== ÇİZİM =============== */
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function drawFloor() {
+    ctx.fillStyle = '#2a313b'; ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    ctx.fillStyle = 'rgba(255,255,255,.025)';
+    for (var y = 0; y < MH; y++) for (var x = (y % 2); x < MW; x += 2) ctx.fillRect(x * T, y * T, T, T);
+    ZONES.forEach(function (z) {
+      var X = z.x * T, Y = z.y * T, Wd = z.w * T, Hd = z.h * T;
+      if (z.f === 'wood' || z.f === 'wood2') {
+        ctx.fillStyle = z.f === 'wood' ? '#4a3a2c' : '#3f3527'; ctx.fillRect(X, Y, Wd, Hd);
+        ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1;
+        for (var yy = Y; yy < Y + Hd; yy += 10) { ctx.beginPath(); ctx.moveTo(X, yy + .5); ctx.lineTo(X + Wd, yy + .5); ctx.stroke(); }
+      } else if (z.f === 'tile') {
+        for (var ty = 0; ty < z.h * 2; ty++) for (var tx = 0; tx < z.w * 2; tx++) { ctx.fillStyle = (tx + ty) % 2 ? '#d8dde3' : '#b9c0c8'; ctx.fillRect(X + tx * 16, Y + ty * 16, 16, 16); }
+        ctx.fillStyle = 'rgba(20,24,30,.35)'; ctx.fillRect(X, Y, Wd, Hd);
+      } else if (z.f === 'balcony') {
+        ctx.fillStyle = '#3b4048'; ctx.fillRect(X, Y, Wd, Hd);
+        ctx.strokeStyle = 'rgba(0,0,0,.2)'; for (var bx = X; bx < X + Wd; bx += 32) { ctx.beginPath(); ctx.moveTo(bx + .5, Y); ctx.lineTo(bx + .5, Y + Hd); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(182,243,106,.08)'; ctx.font = '700 11px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('SİGARA ALANI', X + Wd / 2 + 10, Y + Hd - 10);
+      }
+    });
+    // giriş kapısı
+    ctx.fillStyle = '#1b2026'; ctx.fillRect(16 * T, 21 * T - 4, 2 * T, 4);
+  }
+  function drawWalls() {
+    wallRects.forEach(function (r) {
+      if (r.glass) {
+        ctx.fillStyle = 'rgba(160,210,255,.16)'; ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.strokeStyle = 'rgba(190,225,255,.45)'; ctx.lineWidth = 2; ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+        return;
+      }
+      ctx.fillStyle = '#12161c'; ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.fillStyle = '#262e38'; ctx.fillRect(r.x, r.y, r.w, Math.min(r.h, 8));
+      if (r.h <= T) { ctx.fillStyle = '#1a2028'; ctx.fillRect(r.x, r.y + r.h - 6, r.w, 6); }
+    });
+    // kapı eşikleri
+    [[4, 7, 'h'], [19, 4, 'v'], [20, 16, 'v'], [3, 15, 'h']].forEach(function (d) {
+      ctx.fillStyle = 'rgba(182,243,106,.18)';
+      if (d[2] === 'h') ctx.fillRect(d[0] * T + 2, d[1] * T + 12, T - 4, 8); else ctx.fillRect(d[0] * T + 12, d[1] * T + 2, 8, T - 4);
+    });
+    // balkon korkuluğu ve çıkış
+    ctx.fillStyle = '#5b636e'; for (var bx = T; bx < 7 * T; bx += 8) ctx.fillRect(bx, 21 * T + 4, 3, 20);
+    ctx.fillStyle = '#b6f36a'; ctx.font = '800 10px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('ÇIKIŞ', 17 * T, 21 * T + 18);
+  }
+  function drawFurn(f) {
+    var x = f.x, y = f.y, w = f.w, h = f.h;
+    if (f.type === 'desk' || f.type === 'mdesk') {
+      ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x + 3, y + 6, w, h);
+      ctx.fillStyle = f.type === 'mdesk' ? '#6b4a32' : '#c9a57a'; rr(x, y - 6, w, h, 3); ctx.fill();
+      ctx.fillStyle = f.type === 'mdesk' ? '#4a3222' : '#9c7b55'; ctx.fillRect(x, y + h - 8, w, 8);
+      // monitör arkası
+      var mx = x + w / 2 - 15; ctx.fillStyle = '#1a1f26'; rr(mx, y - 14, 30, 16, 2); ctx.fill();
+      ctx.fillStyle = 'rgba(182,243,106,.35)'; ctx.fillRect(mx + 2, y - 14, 26, 2);
+      ctx.fillStyle = '#2a3038'; ctx.fillRect(x + w / 2 - 3, y + 1, 6, 4);
+      ctx.fillStyle = '#fff'; ctx.fillRect(x + 6, y - 1, 10, 7); ctx.fillStyle = '#e6e9ee'; ctx.fillRect(x + 8, y - 3, 10, 7);
+      ctx.fillStyle = '#d9534f'; ctx.beginPath(); ctx.arc(x + w - 9, y + 1, 4, 0, 7); ctx.fill(); ctx.fillStyle = '#3b2a20'; ctx.beginPath(); ctx.arc(x + w - 9, y + 1, 2.5, 0, 7); ctx.fill();
+    } else if (f.type === 'plant') {
+      ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(x + 16, y + 26, 11, 4, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#8a5a3a'; rr(x + 8, y + 12, 16, 15, 3); ctx.fill();
+      ctx.fillStyle = '#2f7d3f'; [[16, 2, 11], [9, 7, 8], [23, 7, 8], [16, -6, 8]].forEach(function (l) { ctx.beginPath(); ctx.arc(x + l[0], y + l[1], l[2], 0, 7); ctx.fill(); });
+      ctx.fillStyle = '#3d9b50'; ctx.beginPath(); ctx.arc(x + 13, y - 1, 5, 0, 7); ctx.fill();
+    } else if (f.type === 'shelf') {
+      ctx.fillStyle = '#5a4030'; ctx.fillRect(x, y - 24, w, h + 24);
+      var cols = ['#c0392b', '#2d6cdf', '#e8c23a', '#2e9e6b', '#7d4bb3', '#e2702a'];
+      for (var s = 0; s < 2; s++) for (var b = 0; b < 9; b++) { ctx.fillStyle = cols[(b + s * 2) % 6]; ctx.fillRect(x + 4 + b * 6.5, y - 20 + s * 16, 5, 12); }
+    } else if (f.type === 'printer') {
+      ctx.fillStyle = '#d6dbe1'; rr(x + 2, y - 8, w - 4, h + 4, 3); ctx.fill(); ctx.fillStyle = '#9aa3ad'; ctx.fillRect(x + 6, y - 4, w - 12, 6); ctx.fillStyle = '#fff'; ctx.fillRect(x + 9, y + 6, w - 18, 8);
+      ctx.fillStyle = '#b6f36a'; ctx.fillRect(x + w - 9, y + 14, 3, 3);
+    } else if (f.type === 'cooler') {
+      ctx.fillStyle = '#e6e9ee'; rr(x + 7, y - 4, 18, 30, 3); ctx.fill(); ctx.fillStyle = 'rgba(80,160,255,.7)'; rr(x + 9, y - 20, 14, 18, 6); ctx.fill();
+      ctx.fillStyle = '#2d6cdf'; ctx.fillRect(x + 12, y + 8, 3, 3); ctx.fillStyle = '#c0392b'; ctx.fillRect(x + 17, y + 8, 3, 3);
+    } else if (f.type === 'mtable') {
+      ctx.fillStyle = 'rgba(0,0,0,.3)'; rr(x + 4, y + 6, w, h, 18); ctx.fill();
+      ctx.fillStyle = '#7a5a3e'; rr(x, y, w, h, 18); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.07)'; rr(x + 6, y + 6, w - 12, 12, 8); ctx.fill();
+      for (var c = 0; c < 4; c++) { ctx.fillStyle = '#2b3440'; rr(x + 14 + c * 36, y - 12, 18, 10, 4); ctx.fill(); rr(x + 14 + c * 36, y + h + 2, 18, 10, 4); ctx.fill(); }
+      ctx.fillStyle = '#e8ecf0'; ctx.fillRect(x + 30, y + 22, 18, 12); ctx.fillRect(x + 100, y + 26, 14, 10);
+    } else if (f.type === 'tv') {
+      ctx.fillStyle = '#0d1117'; ctx.fillRect(x + 8, y + 4, w - 16, 10); ctx.fillStyle = 'rgba(182,243,106,.5)'; ctx.fillRect(x + 12, y + 6, w - 24, 6);
+    } else if (f.type === 'counter') {
+      ctx.fillStyle = '#8a929c'; ctx.fillRect(x, y - 6, w, h + 6); ctx.fillStyle = '#5b636e'; ctx.fillRect(x, y + h - 8, w, 8);
+      ctx.fillStyle = '#1c2128'; rr(x + 6, y - 18, 22, 26, 3); ctx.fill(); ctx.fillStyle = '#b6f36a'; ctx.fillRect(x + 10, y - 14, 4, 3); ctx.fillStyle = '#fff'; ctx.fillRect(x + 13, y - 1, 8, 6); // kahve makinesi
+      ctx.fillStyle = '#d0d5db'; ctx.fillRect(x + 50, y - 4, 26, 10); ctx.fillStyle = '#9aa3ad'; ctx.beginPath(); ctx.arc(x + 63, y + 1, 4, 0, 7); ctx.fill(); // lavabo
+      ctx.fillStyle = '#e2702a'; ctx.beginPath(); ctx.arc(x + 100, y, 5, 0, 7); ctx.fill(); ctx.fillStyle = '#e8c23a'; ctx.beginPath(); ctx.arc(x + 110, y + 2, 4, 0, 7); ctx.fill();
+    } else if (f.type === 'fridge') {
+      ctx.fillStyle = '#dfe4ea'; rr(x + 4, y - 30, w - 8, h + 28, 4); ctx.fill(); ctx.fillStyle = '#b8c0c8'; ctx.fillRect(x + 4, y - 6, w - 8, 2); ctx.fillStyle = '#7b848e'; ctx.fillRect(x + w - 14, y - 22, 3, 12);
+      ctx.fillStyle = '#e8c23a'; ctx.fillRect(x + 12, y - 24, 8, 8);
+    } else if (f.type === 'ktable') {
+      ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.arc(x + 34, y + 36, 26, 0, 7); ctx.fill();
+      ctx.fillStyle = '#e6e9ee'; ctx.beginPath(); ctx.arc(x + 32, y + 32, 26, 0, 7); ctx.fill();
+      ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(x + 26, y + 28, 5, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + 40, y + 36, 6, 0, 7); ctx.fill();
+    } else if (f.type === 'sofa') {
+      ctx.fillStyle = '#3b5998'; rr(x - 4, y - 10, w + 8, h + 8, 8); ctx.fill(); ctx.fillStyle = '#4a6bb5'; rr(x + 4, y - 4, w - 8, 16, 5); ctx.fill();
+      ctx.fillStyle = '#e8c23a'; rr(x + 10, y - 6, 12, 10, 3); ctx.fill();
+    } else if (f.type === 'ctable') {
+      ctx.fillStyle = '#5a4030'; rr(x + 8, y, w - 16, h, 4); ctx.fill(); ctx.fillStyle = '#e8ecf0'; ctx.fillRect(x + 20, y + 5, 14, 9);
+    } else if (f.type === 'ashtray') {
+      ctx.fillStyle = '#7b848e'; ctx.fillRect(x + 5, y - 12, 4, 20); ctx.fillStyle = '#a9b2bf'; ctx.beginPath(); ctx.ellipse(x + 7, y - 13, 9, 4, 0, 0, 7); ctx.fill();
+    } else if (f.type === 'bench') {
+      ctx.fillStyle = '#7a5a3e'; ctx.fillRect(x + 2, y + 2, w - 4, 12); ctx.fillStyle = '#5a4030'; ctx.fillRect(x + 2, y - 6, w - 4, 6);
+    }
+  }
+
+  // karikatür insan (önden/yandan/arkadan görünüm, ayaklar y'de)
+  function drawPerson(e, look, opts) {
+    opts = opts || {};
+    var x = e.x, y = e.y, dir = e.dir, moving = e.moving, ph = e.walk || 0, belly = look.belly;
+    var bob = moving ? Math.abs(Math.sin(ph)) * 1.6 : 0, seated = opts.seated;
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = 'rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(0, 0, belly ? 13 : 10, 4, 0, 0, 7); ctx.fill();
+    if (seated) { ctx.fillStyle = '#2a3038'; rr(-11, -24, 22, 20, 5); ctx.fill(); ctx.fillStyle = '#3a414b'; rr(-12, -30, 24, 9, 4); ctx.fill(); } // sandalye
+    ctx.translate(0, -bob);
+    // bacaklar
+    var lA = moving ? Math.sin(ph) * 3 : 0;
+    if (!seated) {
+      ctx.fillStyle = look.pants;
+      rr(-6, -9 + Math.max(0, lA) * -.4, 5, 9 - Math.max(0, lA) * .3, 2); ctx.fill();
+      rr(1, -9 + Math.max(0, -lA) * -.4, 5, 9 - Math.max(0, -lA) * .3, 2); ctx.fill();
+      ctx.fillStyle = '#20242a'; rr(-7, -2 - Math.max(0, lA) * .6, 7, 3, 1.5); ctx.fill(); rr(0, -2 - Math.max(0, -lA) * .6, 7, 3, 1.5); ctx.fill();
+    }
+    // gövde
+    var bw = belly ? 13 : 9, bh = 12;
+    ctx.fillStyle = look.shirt;
+    ctx.beginPath(); ctx.ellipse(0, -15, bw, belly ? 10 : bh / 1.6 + 1, 0, 0, 7); ctx.fill();
+    ctx.fillRect(-(belly ? 10 : 8), -24, belly ? 20 : 16, 9);
+    if (belly) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(-4, -16, 5, 6, -.3, 0, 7); ctx.fill();
+      if (dir !== 'up') { ctx.fillStyle = 'rgba(0,0,0,.15)'; [-20, -15, -10].forEach(function (by) { ctx.beginPath(); ctx.arc(0, by, .9, 0, 7); ctx.fill(); }); } }
+    if (look.tie && dir !== 'up') { ctx.fillStyle = look.tie; ctx.beginPath(); ctx.moveTo(-1.5, -24); ctx.lineTo(1.5, -24); ctx.lineTo(belly ? 3 : 2, -14); ctx.lineTo(0, -11); ctx.lineTo(belly ? -2 : -2, -14); ctx.closePath(); ctx.fill(); }
+    // kollar
+    var aS = moving ? Math.sin(ph) * 2.5 : (opts.typing ? Math.sin(t * 18) * 1.2 : 0);
+    ctx.fillStyle = look.shirt;
+    rr(-(bw + 3), -23 + aS, 4, 11, 2); ctx.fill(); rr(bw - 1, -23 - aS, 4, 11, 2); ctx.fill();
+    ctx.fillStyle = look.skin; ctx.beginPath(); ctx.arc(-(bw + 1), -11 + aS, 2.2, 0, 7); ctx.arc(bw + 1, -11 - aS, 2.2, 0, 7); ctx.fill();
+    // baş
+    var hy = -32, hr = 9;
+    ctx.fillStyle = look.skin; ctx.beginPath(); ctx.arc(0, hy, hr, 0, 7); ctx.fill();
+    var fx = dir === 'left' ? -3 : dir === 'right' ? 3 : 0;
+    // saç
+    ctx.fillStyle = look.hair;
+    var st = look.style;
+    if (dir === 'up') {
+      if (st === 'bald') { ctx.beginPath(); ctx.arc(0, hy + 1, hr, Math.PI * .05, Math.PI * .95); ctx.fill(); }
+      else { ctx.beginPath(); ctx.arc(0, hy, hr + .5, 0, 7); ctx.fill(); }
+      if (st === 'long' || st === 'pony' || st === 'curly') { rr(-8, hy, 16, 12, 4); ctx.fill(); }
+      if (st === 'bun') { ctx.beginPath(); ctx.arc(0, hy - 10, 4, 0, 7); ctx.fill(); }
+      if (st === 'cap') { ctx.fillStyle = '#2d6cdf'; ctx.beginPath(); ctx.arc(0, hy - 1, hr + 1, Math.PI, 0); ctx.fill(); }
+    } else {
+      if (st === 'bald') { ctx.beginPath(); ctx.ellipse(-hr + 1, hy + 1, 2.6, 4.5, 0, 0, 7); ctx.ellipse(hr - 1, hy + 1, 2.6, 4.5, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(-2, hy - 6, 3, 1.6, -.3, 0, 7); ctx.fill(); }
+      else if (st === 'short') { ctx.beginPath(); ctx.arc(0, hy - 1, hr + .5, Math.PI * 1.02, Math.PI * 1.98); ctx.fill(); ctx.fillRect(-hr, hy - 3, 3, 4); ctx.fillRect(hr - 3, hy - 3, 3, 4); }
+      else if (st === 'spiky') { ctx.beginPath(); for (var s = 0; s < 6; s++) { ctx.moveTo(-9 + s * 3.4, hy - 4); ctx.lineTo(-7.5 + s * 3.4, hy - 13); ctx.lineTo(-5.5 + s * 3.4, hy - 4); } ctx.fill(); ctx.beginPath(); ctx.arc(0, hy - 2, hr, Math.PI, 0); ctx.fill(); }
+      else if (st === 'long') { ctx.beginPath(); ctx.arc(0, hy - 1, hr + 1, Math.PI, 0); ctx.fill(); rr(-hr - 1, hy - 2, 4, 14, 2); ctx.fill(); rr(hr - 3, hy - 2, 4, 14, 2); ctx.fill(); }
+      else if (st === 'bun') { ctx.beginPath(); ctx.arc(0, hy - 1, hr + .5, Math.PI, 0); ctx.fill(); ctx.beginPath(); ctx.arc(0, hy - 11, 4, 0, 7); ctx.fill(); }
+      else if (st === 'pony') { ctx.beginPath(); ctx.arc(0, hy - 1, hr + .5, Math.PI, 0); ctx.fill(); ctx.beginPath(); ctx.ellipse(hr + 1, hy + 2, 3, 7, .4, 0, 7); ctx.fill(); }
+      else if (st === 'curly') { [-7, -3.5, 0, 3.5, 7].forEach(function (cx) { ctx.beginPath(); ctx.arc(cx, hy - 7, 3.6, 0, 7); ctx.fill(); }); ctx.beginPath(); ctx.arc(-hr, hy, 3.4, 0, 7); ctx.arc(hr, hy, 3.4, 0, 7); ctx.fill(); }
+      else if (st === 'cap') { ctx.fillStyle = '#2d6cdf'; ctx.beginPath(); ctx.arc(0, hy - 2, hr + .5, Math.PI, 0); ctx.fill(); ctx.fillRect(fx * 1.5 - 7 + (dir === 'left' ? -4 : dir === 'right' ? 4 : 0), hy - 3, 14, 2.5); }
+      // yüz
+      var ex = opts.expr || 'normal';
+      ctx.fillStyle = '#1e2228';
+      if (ex === 'happy') { ctx.strokeStyle = '#1e2228'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(fx - 3.2, hy, 1.8, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); ctx.beginPath(); ctx.arc(fx + 3.2, hy, 1.8, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+      else if (ex === 'plead') { ctx.beginPath(); ctx.arc(fx - 3.2, hy, 2, 0, 7); ctx.arc(fx + 3.2, hy, 2, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(fx - 2.6, hy - .7, .8, 0, 7); ctx.arc(fx + 3.8, hy - .7, .8, 0, 7); ctx.fill(); }
+      else { ctx.beginPath(); ctx.arc(fx - 3.2, hy, 1.3, 0, 7); ctx.arc(fx + 3.2, hy, 1.3, 0, 7); ctx.fill(); }
+      if (look.glasses) { ctx.strokeStyle = '#1e2228'; ctx.lineWidth = .9; ctx.strokeRect(fx - 6, hy - 2.2, 5, 4); ctx.strokeRect(fx + 1, hy - 2.2, 5, 4); ctx.beginPath(); ctx.moveTo(fx - 1, hy - .5); ctx.lineTo(fx + 1, hy - .5); ctx.stroke(); }
+      // kaşlar
+      ctx.strokeStyle = look.style === 'bald' ? '#3b3330' : look.hair; ctx.lineWidth = 1.2;
+      if (ex === 'plead' || ex === 'sad') { ctx.beginPath(); ctx.moveTo(fx - 5.5, hy - 3); ctx.lineTo(fx - 1.5, hy - 4.6); ctx.moveTo(fx + 1.5, hy - 4.6); ctx.lineTo(fx + 5.5, hy - 3); ctx.stroke(); }
+      else if (opts.alarm) { ctx.beginPath(); ctx.moveTo(fx - 5.5, hy - 5); ctx.lineTo(fx - 1.5, hy - 5.2); ctx.moveTo(fx + 1.5, hy - 5.2); ctx.lineTo(fx + 5.5, hy - 5); ctx.stroke(); }
+      // yanaklar
+      ctx.fillStyle = 'rgba(235,120,110,.35)'; ctx.beginPath(); ctx.arc(fx - 5.5, hy + 3, 1.9, 0, 7); ctx.arc(fx + 5.5, hy + 3, 1.9, 0, 7); ctx.fill();
+      // sakal / bıyık / ağız
+      if (look.beard) { ctx.fillStyle = look.hair; ctx.beginPath(); ctx.arc(0, hy + 2, hr - .5, Math.PI * .1, Math.PI * .9); ctx.fill(); }
+      ctx.strokeStyle = '#7a3b2e'; ctx.lineWidth = 1.1;
+      if (opts.alarm) { ctx.fillStyle = '#7a2e26'; ctx.beginPath(); ctx.ellipse(fx, hy + 5, 1.6, 2, 0, 0, 7); ctx.fill(); }
+      else if (ex === 'happy') { ctx.beginPath(); ctx.arc(fx, hy + 3.4, 2.4, .1, Math.PI - .1); ctx.stroke(); }
+      else if (ex === 'sad') { ctx.beginPath(); ctx.arc(fx, hy + 6.5, 2.2, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.arc(fx, hy + 3.4, 2, .3, Math.PI - .3); ctx.stroke(); }
+      if (look.mustache) { ctx.fillStyle = look.style === 'bald' ? '#2a2422' : look.hair; ctx.beginPath(); ctx.ellipse(fx - 2.4, hy + 3, 3, 1.5, -.2, 0, 7); ctx.ellipse(fx + 2.4, hy + 3, 3, 1.5, .2, 0, 7); ctx.fill(); }
+      if (opts.cig) { // ağızda dal
+        var cx0 = fx + (dir === 'left' ? -2 : 2), sgn = dir === 'left' ? -1 : 1;
+        ctx.fillStyle = '#f4f1ea'; ctx.save(); ctx.translate(cx0, hy + 4.5); ctx.rotate(sgn * .25); ctx.fillRect(sgn > 0 ? 0 : -9, -1, 9, 2); ctx.fillStyle = '#e2a45a'; ctx.fillRect(sgn > 0 ? 0 : -3, -1, 3, 2); ctx.fillStyle = '#ff6a2a'; ctx.fillRect(sgn > 0 ? 8 : -9, -1, 1.5, 2); ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+  function drawIcon(n) {
+    var x = n.x, y = n.y - 52;
+    if (n.state === 'alert' || n.icon === 'alert') { badge(x, y, '#f5c518', '!'); return; }
+    if (n.state === 'flee') { badge(x, y, '#ff6b5e', '!'); ctx.fillStyle = 'rgba(160,210,255,.9)'; ctx.beginPath(); ctx.ellipse(x + 9, y + 12, 1.6, 2.6, 0, 0, 7); ctx.fill(); return; }
+    if (n.state === 'race') { badge(x, y, '#f5c518', '»'); return; }
+    if (n.cool > 0) {
+      ctx.fillStyle = 'rgba(13,17,23,.85)'; ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (n.cool / 22)); ctx.stroke(); return;
+    }
+    if (n.stock > 0 && n.p.kind !== 'birakmis') { // verebilir: küçük dal simgesi
+      ctx.fillStyle = 'rgba(13,17,23,.75)'; rr(x - 9, y - 5, 18, 10, 5); ctx.fill();
+      ctx.fillStyle = '#f4f1ea'; ctx.fillRect(x - 6, y - 1, 10, 2.4); ctx.fillStyle = '#e2a45a'; ctx.fillRect(x - 6, y - 1, 3, 2.4); ctx.fillStyle = '#ff6a2a'; ctx.fillRect(x + 4, y - 1, 1.5, 2.4);
+    }
+  }
+  function badge(x, y, col, ch) {
+    var s = 1 + Math.sin(t * 14) * .08;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, 7.5, 0, 7); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.font = '900 11px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, 0, .5); ctx.textBaseline = 'alphabetic';
+    ctx.restore();
+  }
+  function drawPack(pk) {
+    var b = Math.sin(t * 6) * 2;
+    ctx.save(); ctx.translate(pk.x, pk.y);
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0, 6, 8, 3, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#f4f1ea'; rr(-6, -8, 12, 14, 2); ctx.fill(); ctx.fillStyle = '#9aa3ad'; ctx.fillRect(-6, -8, 12, 4); ctx.fillStyle = '#b6f36a'; ctx.fillRect(-6, -1, 12, 2);
+    ctx.fillStyle = '#f5c518'; ctx.beginPath(); ctx.moveTo(-5, -22 + b); ctx.lineTo(5, -22 + b); ctx.lineTo(0, -14 + b); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function drawBubble(b) {
+    var e = b.ent, fs = 11;
+    ctx.font = '700 ' + fs + 'px Inter, sans-serif';
+    var w = Math.min(190, ctx.measureText(b.text).width + 16), lines = wrap(b.text, w - 14);
+    var h = lines.length * 13 + 10, x = e.x - w / 2, y = e.y - 64 - h;
+    x = Math.max(camX + 4, Math.min(camX + viewW - w - 4, x)); y = Math.max(camY + 4, y);
+    ctx.globalAlpha = Math.min(1, b.life * 3);
+    var isI = e === ilker;
+    ctx.fillStyle = isI ? '#b6f36a' : '#f4f6f8'; rr(x, y, w, h, 7); ctx.fill();
+    ctx.beginPath(); var tx = Math.max(x + 10, Math.min(x + w - 10, e.x)); ctx.moveTo(tx - 5, y + h); ctx.lineTo(tx + 5, y + h); ctx.lineTo(e.x, y + h + 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#12161c'; ctx.textAlign = 'center';
+    lines.forEach(function (l, i) { ctx.fillText(l, x + w / 2, y + 16 + i * 13); });
+    ctx.globalAlpha = 1;
+  }
+  function wrap(text, maxW) {
+    var words = text.split(' '), lines = [], cur = '';
+    words.forEach(function (w) { var test = cur ? cur + ' ' + w : w; if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test; });
+    if (cur) lines.push(cur); return lines;
+  }
+  function draw() {
+    // kamera
+    camX = Math.max(0, Math.min(WORLD_W - viewW, ilker.x - viewW / 2)); camY = Math.max(0, Math.min(WORLD_H - viewH, ilker.y - 20 - viewH / 2));
+    if (viewW > WORLD_W) camX = (WORLD_W - viewW) / 2; if (viewH > WORLD_H) camY = (WORLD_H - viewH) / 2;
+    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0);
+    ctx.fillStyle = '#0b0f14'; ctx.fillRect(0, 0, viewW, viewH);
+    ctx.translate(-Math.round(camX * zoom) / zoom, -Math.round(camY * zoom) / zoom);
+    drawFloor(); drawWalls();
+    furn.filter(function (f) { return f.flat; }).forEach(drawFurn);
+    // derinlik sırası
+    var list = [];
+    furn.forEach(function (f) { if (!f.flat) list.push({ y: f.y + f.h, f: f }); });
+    npcs.forEach(function (n) { list.push({ y: n.y, n: n }); });
+    packs.forEach(function (p) { list.push({ y: p.y + 6, pk: p }); });
+    list.push({ y: ilker.y + .1, me: true });
+    list.sort(function (a, b) { return a.y - b.y; });
+    var near = state === 'play' ? nearestNpc() : null;
+    list.forEach(function (o) {
+      if (o.f) drawFurn(o.f);
+      else if (o.pk) drawPack(o.pk);
+      else if (o.n) {
+        var n = o.n, seated = n.state === 'seat' && !n.moving && Math.abs(n.x - n.seat.x) < 1 && Math.abs(n.y - n.seat.y) < 1;
+        if (n === near) { ctx.strokeStyle = 'rgba(182,243,106,.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(n.x, n.y, 14, 5, 0, 0, 7); ctx.stroke(); }
+        drawPerson(n, n.look, { seated: seated, typing: seated, alarm: n.state === 'alert' || n.state === 'flee', expr: n.state === 'caught' ? 'sad' : 'normal' });
+        if (n.smoke && n.state === 'idle') { ctx.fillStyle = '#f4f1ea'; ctx.fillRect(n.x + 9, n.y - 13, 7, 1.8); ctx.fillStyle = '#ff6a2a'; ctx.fillRect(n.x + 16, n.y - 13, 1.5, 1.8); }
+      } else if (o.me) {
+        drawPerson(ilker, ILKER_LOOK, { expr: ilker.expr, cig: ilker.expr === 'happy' });
+      }
+    });
+    puffs.forEach(function (p) { ctx.fillStyle = 'rgba(220,225,230,' + (p.life * .35) + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); });
+    npcs.forEach(drawIcon);
+    // isim etiketi + E ipucu
+    if (near) {
+      ctx.font = '700 10px Inter, sans-serif'; var nw = ctx.measureText(near.name).width + 30;
+      ctx.fillStyle = 'rgba(13,17,23,.85)'; rr(near.x - nw / 2, near.y + 6, nw, 16, 5); ctx.fill();
+      ctx.fillStyle = '#b6f36a'; rr(near.x - nw / 2 + 3, near.y + 8, 12, 12, 3); ctx.fill();
+      ctx.fillStyle = '#0b0e12'; ctx.textAlign = 'center'; ctx.font = '900 9px Inter, sans-serif'; ctx.fillText('E', near.x - nw / 2 + 9, near.y + 17);
+      ctx.fillStyle = '#e6edf3'; ctx.font = '700 10px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(near.name, near.x - nw / 2 + 19, near.y + 18);
+    }
+    bubbles.forEach(drawBubble);
+    floats.forEach(function (f) { ctx.globalAlpha = Math.min(1, f.life * 1.4); ctx.fillStyle = f.color; ctx.font = '800 13px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(f.text, f.x, f.y); });
+    ctx.globalAlpha = 1;
+
+    // ekran üstü: süre çubuğu
+    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0);
+    if (state === 'play' || state === 'over') {
+      var frac = timeLeft / ROUND;
+      ctx.fillStyle = 'rgba(13,17,23,.7)'; rr(viewW / 2 - 70, 8, 140, 24, 12); ctx.fill();
+      ctx.fillStyle = timeLeft <= 10 ? '#ff6b5e' : '#b6f36a'; rr(viewW / 2 - 64, 25, 128 * frac, 3, 1.5); ctx.fill();
+      ctx.font = '700 13px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = timeLeft <= 10 && Math.floor(t * 3) % 2 ? '#ff6b5e' : '#e6edf3';
+      ctx.fillText('⏱ ' + Math.ceil(timeLeft) + ' sn', viewW / 2, 22);
+      ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(13,17,23,.7)'; rr(8, 8, 74, 24, 12); ctx.fill();
+      ctx.fillStyle = '#f4f1ea'; ctx.fillRect(18, 18, 14, 3); ctx.fillStyle = '#e2a45a'; ctx.fillRect(18, 18, 4, 3); ctx.fillStyle = '#ff6a2a'; ctx.fillRect(32, 18, 2, 3);
+      ctx.fillStyle = '#e6edf3'; ctx.font = '700 13px "JetBrains Mono", monospace'; ctx.fillText('x' + cigs, 40, 24);
+    }
+    if (paused && state === 'play') {
+      ctx.fillStyle = 'rgba(11,14,18,.6)'; ctx.fillRect(0, 0, viewW, viewH);
+      ctx.textAlign = 'center'; ctx.fillStyle = '#b6f36a'; ctx.font = '800 24px Inter, sans-serif'; ctx.fillText('Duraklatıldı', viewW / 2, viewH / 2);
+      ctx.fillStyle = '#c9d1d9'; ctx.font = '500 13px Inter, sans-serif'; ctx.fillText('Devam etmek için Esc ya da dokun', viewW / 2, viewH / 2 + 24);
+    }
+  }
+
+  /* =============== ÖLÇEKLEME =============== */
+  function resize() {
+    var w = stage.clientWidth || 640;
+    var narrow = w < 600;
+    var h = narrow ? Math.round(Math.min(window.innerHeight * .64, w * 1.3)) : Math.round(Math.min(w * .66, 600));
+    h = Math.max(320, h);
+    stage.style.height = h + 'px';
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.width = w + 'px'; cv.style.height = h + 'px';
+    zoom = narrow ? w / 380 : w / 640; viewW = w / zoom; viewH = h / zoom;
+  }
+  window.addEventListener('resize', resize);
+  if ('ResizeObserver' in window) new ResizeObserver(resize).observe(stage);
+
+  /* =============== GİRİŞ =============== */
+  var KEYMAP = { KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right' };
+  window.addEventListener('keydown', function (e) {
+    if (Oyun.isTyping()) return;
+    if (state === 'play') {
+      if (KEYMAP[e.code]) { e.preventDefault(); input[KEYMAP[e.code]] = true; return; }
+      if (e.code === 'Escape' || e.code === 'KeyP') { e.preventDefault(); paused = !paused; return; }
+      if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (paused) { paused = false; return; } if (!e.repeat) interact(); return; }
+    } else if ((e.code === 'Space' || e.code === 'Enter') && (state === 'menu' || state === 'over')) {
+      var a = document.activeElement; if (a && a.tagName === 'BUTTON') return;
+      e.preventDefault(); start();
+    }
+  });
+  window.addEventListener('keyup', function (e) { if (KEYMAP[e.code]) input[KEYMAP[e.code]] = false; });
+  window.addEventListener('blur', function () { input.up = input.down = input.left = input.right = false; input.jx = input.jy = 0; });
+
+  // dokunmatik kol
+  var joy = $('joy'), knob = $('knob'), joyId = null;
+  function joyMove(e) {
+    var r = joy.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy), max = r.width / 2 - 10;
+    if (d > max) { dx = dx / d * max; dy = dy / d * max; }
+    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    var nx = dx / max, ny = dy / max, mag = Math.hypot(nx, ny);
+    if (mag < .18) { nx = 0; ny = 0; }
+    input.jx = nx; input.jy = ny;
+  }
+  function joyEnd() { joyId = null; input.jx = input.jy = 0; knob.style.transform = ''; }
+  joy.addEventListener('pointerdown', function (e) { e.preventDefault(); joyId = e.pointerId; try { joy.setPointerCapture(e.pointerId); } catch (x) {} if (paused) paused = false; joyMove(e); });
+  joy.addEventListener('pointermove', function (e) { if (e.pointerId === joyId) joyMove(e); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (n) { joy.addEventListener(n, function (e) { if (e.pointerId === joyId) joyEnd(); }); });
+  $('askBtn').addEventListener('pointerdown', function (e) { e.preventDefault(); if (paused) { paused = false; return; } interact(); });
+  $('pauseBtn').addEventListener('click', function () { if (state === 'play') paused = !paused; });
+  cv.addEventListener('pointerdown', function () { if (paused) paused = false; });
+
+  $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
+  document.addEventListener('visibilitychange', function () { if (document.hidden && state === 'play') paused = true; });
+  document.addEventListener('nickchange', function () { best = board.best(); $('menuBest').textContent = best; });
+
+  var last = performance.now();
+  function loop(now) { var dt = Math.min(.05, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); }
+
+  if (/[?&]test\b/.test(location.search)) window.__ilker = { get ilker() { return ilker; }, get npcs() { return npcs; }, get packs() { return packs; }, get state() { return state; }, get paused() { return paused; },
+    get stats() { return { score: score, cigs: cigs, succ: succ, caught: caughtCount, timeLeft: timeLeft }; }, set timeLeft(v) { timeLeft = v; }, interact: interact, grid: grid, bfs: bfs, WALKABLE: WALKABLE, T: T };
+
+  resize(); reset(); state = 'menu';
+  board.refresh().then(function () { best = board.best(); $('menuBest').textContent = best; });
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="muzik.js" defer></script>
+</body>
+</html>
