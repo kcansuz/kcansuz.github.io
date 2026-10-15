@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Makas Ömer | ENGILAV</title>
+<meta name="description" content="Ömer beyaz sedanıyla otoyolda: trafikte makas at, radar tabelasını görünce yavaşla, ceza yeme. Klavye ve dokunmatik kontrollü ENGILAV mini oyunu.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="oyun.css">
+<style>
+  .stage .overlay{cursor:auto}
+  .rules{list-style:none;text-align:left;display:grid;gap:6px;max-width:330px;font-size:.86rem;color:var(--muted)}
+  .rules li{display:flex;gap:8px}
+  .rules li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:7px}
+  .rules b{color:var(--text)}
+  .ctl{display:none;grid-template-columns:1fr 1.2fr 1fr;gap:10px;margin-top:12px}
+  .ctl button{height:62px;background:var(--panel);border:1px solid var(--line);border-radius:12px;font-size:1.4rem;color:var(--text);cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+  .ctl button.brake{font-size:.95rem;font-weight:800;letter-spacing:.08em;color:#ff8a80}
+  .ctl button.on{border-color:var(--accent);color:var(--accent)}
+  .ctl button.brake.on{border-color:#ff6b5e;color:#ff6b5e;background:rgba(255,107,94,.1)}
+  @media (hover:none),(pointer:coarse){.ctl{display:grid}}
+  .prow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;margin-bottom:10px}
+  .prow .player{margin-bottom:0}
+  .stats{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--muted)}
+</style>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="ortak.css">
+<style>.layout .main{max-width:420px}</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a href="index.html" class="brand" aria-label="ENGILAV — ana sayfa"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 4H35L32 11H13V16.5H24V23.5H13V29H32L35 36H11L4 29V11Z" fill="#b6f36a"/><circle cx="30" cy="20" r="3.5" fill="#b6f36a"/></svg><span class="wm"><b>ENGILAV</b><small>YAZILIM &amp; OTOMASYON</small></span></a>
+    <a href="index.html#oyunlar" class="back">← Tüm oyunlar</a>
+  </div>
+</header>
+
+<div class="game layout">
+<div class="main">
+  <div class="prow"><div class="player" id="player"></div><span id="muzik-yeri"></span></div>
+  <div class="hud">
+    <div>PUAN <b id="score">0</b></div>
+    <div>CAN <b id="lives">♥♥♥</b></div>
+    <div>CEZA <b id="fines">0/3</b></div>
+    <div>REKOR <b id="best">0</b></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="Makas Ömer oyun alanı" role="img"></canvas>
+    <div class="overlay" id="menu">
+      <h1>Makas <em>Ömer</em></h1>
+      <p>Ömer beyaz sedanıyla otoyolda. Araba kendiliğinden hızlanır; sen direksiyonu ve freni yönet.</p>
+      <ul class="rules">
+        <li><span><b>Makas at:</b> 100 km/s üstünde araçların yanından yakın geç, bonus kazan.</span></li>
+        <li><span><b>Radara dikkat:</b> hız tabelasını görünce yavaşla. Kamerayı sınırın üstünde geçersen ceza!</span></li>
+        <li><span><b>3 ceza</b> ehliyete el konur, <b>3 kaza</b> yolculuk biter.</span></li>
+      </ul>
+      <button class="btn" id="startBtn" type="button">Yola Çık</button>
+    </div>
+    <div class="overlay" id="over" hidden>
+      <h2 id="overTitle">Kaza <em>Yaptın</em></h2>
+      <div class="big" id="final">0</div>
+      <p class="stats" id="stats"></p>
+      <p id="overMsg"></p>
+      <button class="btn" id="againBtn" type="button">Tekrar Yola Çık</button>
+    </div>
+  </div>
+  <div class="ctl" aria-label="Sürüş butonları">
+    <button type="button" id="leftBtn" aria-label="Sola">◀</button>
+    <button type="button" class="brake" id="brakeBtn" aria-label="Fren">FREN</button>
+    <button type="button" id="rightBtn" aria-label="Sağa">▶</button>
+  </div>
+  <p class="help">Direksiyon: <kbd>←</kbd> <kbd>→</kbd> · Fren: <kbd>↓</kbd> ya da <kbd>Boşluk</kbd> · Gaz: <kbd>↑</kbd> · Duraklat: <kbd>P</kbd></p>
+</div>
+<aside class="side">
+  <section class="board"><h2>🏆 Skor tablosu <small id="boardNote"></small></h2><ol id="scoreList"></ol></section>
+</aside>
+</div>
+
+<script src="skor.js"></script>
+<script src="oyun-ortak.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var W = 400, H = 600;
+  var ROAD_L = 60, ROAD_R = 340, LANES = 4, LW = (ROAD_R - ROAD_L) / LANES;
+  var PX = 2.6;                       // km/s başına piksel/saniye
+  var VMIN = 40, VMAX = 200, PY = 468; // Ömer'in ekrandaki yeri
+  var cv = $('c'), ctx = cv.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  function laneX(i) { return ROAD_L + LW * (i + .5); }
+
+  var state = 'menu', paused = false, t = 0;
+  var car, traffic, deco, radars, fx, texts, score = 0, best = 0, lives = 3, fines = 0, km = 0, level = 1;
+  var spawnT = 0, nextRadarKm = 0.6, flash = 0, shake = 0, makasCount = 0, combo = 0, comboT = 0, dash = 0, scoreAcc = 0;
+  var keys = { left: false, right: false, brake: false, gas: false }, target = null;
+  var board = Oyun.board('makas', $('scoreList'), $('boardNote'));
+  Oyun.playerLine($('player'));
+
+  function hearts() { var s = ''; for (var i = 0; i < lives; i++) s += '♥'; return s || '–'; }
+  function hud() { $('score').textContent = score; $('best').textContent = best; $('lives').textContent = hearts(); $('fines').textContent = fines + '/3'; }
+
+  var COLORS = ['#c0392b', '#2d6cdf', '#7d4bb3', '#34495e', '#9aa5ae', '#d9771e', '#2e9e5b', '#1f2a36', '#b03a5b'];
+  function makeCar(lane, y) {
+    var r = Math.random(), c;
+    if (r < .1) c = { kind: 'tir', w: 42, h: 132, speed: 40 + Math.random() * 18, color: ['#e8e8e8', '#2d6cdf', '#c0392b'][Math.floor(Math.random() * 3)] };
+    else if (r < .2) c = { kind: 'otobus', w: 42, h: 112, speed: 50 + Math.random() * 18, color: '#eef1f4' };
+    else if (r < .32) c = { kind: 'taksi', w: 34, h: 62, speed: 58 + Math.random() * 30, color: '#f2c618' };
+    else if (r < .5) c = { kind: 'hatch', w: 32, h: 54, speed: 52 + Math.random() * 36, color: COLORS[Math.floor(Math.random() * COLORS.length)] };
+    else c = { kind: 'sedan', w: 34, h: 64, speed: 55 + Math.random() * 40, color: COLORS[Math.floor(Math.random() * COLORS.length)] };
+    c.lane = lane; c.x = laneX(lane); c.y = y === undefined ? -c.h - 10 : y; c.target = lane; c.blink = 0; c.minGap = 999; c.passed = false; c.hit = false;
+    c.willChange = Math.random() < Math.min(.45, .1 + level * .05);
+    return c;
+  }
+  function reset() {
+    car = { x: laneX(2), vx: 0, speed: 90, inv: 0, tilt: 0 };
+    traffic = []; deco = []; radars = []; fx = []; texts = [];
+    score = 0; lives = 3; fines = 0; km = 0; level = 1; spawnT = .8; nextRadarKm = 0.55; flash = 0; shake = 0; makasCount = 0; combo = 0; comboT = 0; scoreAcc = 0;
+    for (var y = -40; y < H + 60; y += 70) addDeco(y);
+    traffic.push(makeCar(0, 120), makeCar(3, 40), makeCar(1, -120));
+    hud();
+  }
+  function addDeco(y) {
+    [0, 1].forEach(function (side) {
+      var r = Math.random();
+      var x = side ? ROAD_R + 14 + Math.random() * 40 : 6 + Math.random() * 40;
+      deco.push({ type: r < .3 ? 'lamba' : (r < .85 ? 'agac' : 'cali'), x: side ? ROAD_R + 12 : ROAD_L - 12, tx: x, y: y + Math.random() * 30, side: side, s: .8 + Math.random() * .5 });
+    });
+  }
+  function start() {
+    Oyun.requireNick().then(function () {
+      reset(); best = board.best(); hud(); state = 'play'; paused = false;
+      $('menu').hidden = true; $('over').hidden = true;
+    });
+  }
+  function gameOver(reason) {
+    state = 'over';
+    $('overTitle').innerHTML = reason === 'ceza' ? 'Ehliyete <em>El Konuldu</em>' : 'Kaza <em>Yaptın</em>';
+    $('final').textContent = score; $('overMsg').textContent = 'Skor kaydediliyor…';
+    $('stats').textContent = 'Yol: ' + km.toFixed(1) + ' km · Makas: ' + makasCount + ' · Ceza: ' + fines;
+    best = Math.max(best, score); hud();
+    setTimeout(function () { $('over').hidden = false; $('againBtn').focus(); }, 1000);
+    board.submit(score).then(function (r) { $('overMsg').textContent = r.msg; best = r.best; hud(); });
+  }
+  function say(x, y, text, color, size) { texts.push({ x: x, y: y, text: text, color: color, life: 1.1, size: size || 18 }); }
+  function burst(x, y, color, n, sp) { for (var i = 0; i < n; i++) { var a = Math.random() * 7, v = sp * (.3 + Math.random() * .9); fx.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: .5 + Math.random() * .4, max: .9, color: color }); } }
+
+  function laneFree(lane, y, h, self) {
+    for (var i = 0; i < traffic.length; i++) {
+      var o = traffic[i]; if (o === self) continue;
+      var occ = (o.lane === lane || o.target === lane);
+      if (occ && y < o.y + o.h + 50 && y + h + 50 > o.y) return false;
+    }
+    return true;
+  }
+
+  /* ---------- güncelleme ---------- */
+  function update(dt) {
+    t += dt;
+    fx.forEach(function (p) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }); fx = fx.filter(function (p) { return p.life > 0; });
+    texts.forEach(function (s) { s.y -= 34 * dt; s.life -= dt; }); texts = texts.filter(function (s) { return s.life > 0; });
+    flash = Math.max(0, flash - dt * 2.2); shake = Math.max(0, shake - dt);
+    var v = state === 'play' ? car.speed : (state === 'menu' ? 80 : Math.max(0, car.speed));
+    if (state === 'over') { car.speed = Math.max(0, car.speed - 160 * dt); v = car.speed; }
+    if (paused) return;
+    var scroll = v * PX * dt;
+    dash = (dash + scroll) % 40;
+    deco.forEach(function (d) { d.y += scroll; });
+    deco = deco.filter(function (d) { return d.y < H + 60; });
+    while (!deco.length || Math.min.apply(null, deco.map(function (d) { return d.y; })) > -10) addDeco(Math.min.apply(null, deco.length ? deco.map(function (d) { return d.y; }) : [H]) - 70);
+
+    // trafik
+    traffic.forEach(function (c) {
+      c.y += (v - c.speed) * PX * dt;
+      if (c.blink > 0) { c.blink -= dt; if (c.blink <= 0) c.lane = c.target; }
+      var tx = laneX(c.target);
+      if (c.blink <= 0 && Math.abs(c.x - tx) > .5) c.x += Math.sign(tx - c.x) * Math.min(Math.abs(tx - c.x), 70 * dt);
+      // önündeki yavaş araca yetişince yavaşla
+      traffic.forEach(function (o) {
+        if (o === c || (o.lane !== c.lane && o.target !== c.lane)) return;
+        if (o.y < c.y && c.y - (o.y + o.h) < 24 && c.speed > o.speed) c.speed = o.speed;
+      });
+      // şerit değiştirme (sinyal vererek)
+      if (state === 'play' && c.willChange && c.blink <= 0 && c.lane === c.target && c.y > 20 && c.y < 260) {
+        c.willChange = false;
+        var opts = [c.lane - 1, c.lane + 1].filter(function (l) { return l >= 0 && l < LANES && laneFree(l, c.y, c.h, c); });
+        if (opts.length) { c.target = opts[Math.floor(Math.random() * opts.length)]; c.blink = .9; }
+      }
+    });
+    traffic = traffic.filter(function (c) { return c.y < H + 160 && c.y > -500; });
+
+    // yeni araçlar
+    spawnT -= dt;
+    if (spawnT <= 0) {
+      var lane = Math.floor(Math.random() * LANES), probe = makeCar(lane);
+      if (state !== 'over' && probe.speed < v - 5 && laneFree(lane, probe.y, probe.h, null)) traffic.push(probe);
+      spawnT = Math.max(.34, 1.25 - level * .09) * (.6 + Math.random() * .7) * (90 / Math.max(60, v));
+    }
+
+
+    if (state !== 'play') return;
+
+    // sürüş
+    var acc = keys.gas ? 34 : 14;
+    if (keys.brake) car.speed -= 95 * dt; else car.speed += acc * dt * (car.speed > 150 ? .6 : 1);
+    car.speed = Math.max(VMIN, Math.min(VMAX, car.speed));
+    var steer = 0;
+    if (keys.left || keys.right) { target = null; steer = ((keys.right ? 1 : 0) - (keys.left ? 1 : 0)) * 300; }
+    else if (target !== null) steer = Math.max(-320, Math.min(320, (target - car.x) * 8));
+    car.vx += (steer - car.vx) * Math.min(1, dt * 12);
+    car.x += car.vx * dt;
+    var minX = ROAD_L + 18, maxX = ROAD_R - 18;
+    if (car.x < minX) { car.x = minX; car.vx = 0; } if (car.x > maxX) { car.x = maxX; car.vx = 0; }
+    car.tilt = car.vx / 300 * .12;
+    car.inv = Math.max(0, car.inv - dt);
+
+    km += v * dt / 3600;
+    level = 1 + Math.floor(km / 1.2);
+    scoreAcc += v * dt * .06; // hızlı gidene daha çok puan
+    if (scoreAcc >= 1) { score += Math.floor(scoreAcc); scoreAcc -= Math.floor(scoreAcc); hud(); }
+    comboT = Math.max(0, comboT - dt); if (comboT === 0) combo = 0;
+
+    // çarpışma + makas
+    var px0 = car.x - 15, px1 = car.x + 15, py0 = PY - 30, py1 = PY + 30;
+    for (var i = 0; i < traffic.length; i++) {
+      var c = traffic[i], cx0 = c.x - c.w / 2 + 2, cx1 = c.x + c.w / 2 - 2, cy0 = c.y + 3, cy1 = c.y + c.h - 3;
+      var vOverlap = cy1 > py0 && cy0 < py1;
+      if (vOverlap) {
+        var gap = Math.max(cx0 - px1, px0 - cx1);
+        if (gap < 0 && car.inv <= 0 && !c.hit) { crash(c); if (state !== 'play') return; continue; }
+        if (gap >= 0) c.minGap = Math.min(c.minGap, gap);
+      }
+      if (!c.passed && cy0 > py1) {
+        c.passed = true;
+        if (!c.hit && c.minGap < 18 && v >= 100) {
+          combo++; comboT = 2.6; makasCount++;
+          var bonus = 20 * combo + (c.kind === 'tir' || c.kind === 'otobus' ? 20 : 0);
+          score += bonus; hud();
+          say(car.x, PY - 50, 'MAKAS! +' + bonus, '#b6f36a', combo > 2 ? 22 : 19);
+          if (combo >= 3) say(car.x, PY - 76, 'x' + combo + ' kombo', '#f5c542', 15);
+        }
+      }
+    }
+
+    // radar
+    if (km >= nextRadarKm) {
+      var lim = [70, 90, 110][Math.floor(Math.random() * 3)];
+      if (level >= 3 && Math.random() < .3) lim = 50;
+      radars.push({ sign: -50, cam: -50 - 380, limit: lim, checked: false });
+      nextRadarKm = km + 0.9 + Math.random() * 0.7 - Math.min(.4, level * .05);
+    }
+    radars.forEach(function (r) {
+      var prevCam = r.cam;
+      r.sign += scroll; r.cam += scroll;
+      if (!r.checked && prevCam < PY && r.cam >= PY) {
+        r.checked = true;
+        if (v > r.limit + 3) {
+          fines++; flash = 1; score = Math.max(0, score - 150); combo = 0; hud();
+          say(W / 2, 230, 'CEZA! ' + Math.round(v) + ' km/s', '#ff6b5e', 24);
+          say(W / 2, 258, 'Sınır ' + r.limit + ' · −150 puan', '#ffb4ab', 14);
+          if (fines >= 3) return gameOver('ceza');
+        } else {
+          score += 30; hud(); say(W / 2, 240, 'Radar temiz +30', '#b6f36a', 18);
+        }
+      }
+    });
+    radars = radars.filter(function (r) { return r.cam < H + 80; });
+  }
+  function crash(c) {
+    c.hit = true; lives--; car.inv = 1.6; shake = .45; combo = 0;
+    car.speed = Math.max(VMIN, car.speed * .55);
+    c.speed = Math.max(20, c.speed - 25);
+    burst(car.x, PY - 28, '#ffd27a', 18, 220); burst(car.x, PY - 28, '#c9d1d9', 10, 160);
+    say(car.x, PY - 60, 'Çarptın!', '#ff6b5e', 22);
+    hud();
+    if (lives <= 0) gameOver('kaza');
+  }
+  function activeRadar() { for (var i = 0; i < radars.length; i++) { var r = radars[i]; if (r.sign >= 0 && !r.checked) return r; } return null; }
+
+  /* ---------- çizim ---------- */
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function shade(hex, k) {
+    var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    var f = function (c) { return Math.max(0, Math.min(255, Math.round(k < 0 ? c * (1 + k) : c + (255 - c) * k))); };
+    return 'rgb(' + f(r) + ',' + f(g) + ',' + f(b) + ')';
+  }
+  function drawVehicle(c, player) {
+    var x = c.x - c.w / 2, y = c.y, w = c.w, h = c.h;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; rr(x + 3, y + 5, w, h, 7); ctx.fill(); // gölge
+    if (c.kind === 'tir') {
+      ctx.fillStyle = shade(c.color, -.15); rr(x + 3, y, w - 6, 30, 6); ctx.fill();                     // kabin
+      ctx.fillStyle = '#1a2230'; rr(x + 7, y + 6, w - 14, 9, 3); ctx.fill();                          // ön cam
+      ctx.fillStyle = '#3a414b'; ctx.fillRect(x + 8, y + 30, w - 16, 6);
+      ctx.fillStyle = c.color; rr(x, y + 36, w, h - 36, 4); ctx.fill();                                // dorse
+      ctx.strokeStyle = 'rgba(0,0,0,.15)'; ctx.lineWidth = 1;
+      for (var k = y + 46; k < y + h - 6; k += 12) { ctx.beginPath(); ctx.moveTo(x + 3, k); ctx.lineTo(x + w - 3, k); ctx.stroke(); }
+    } else if (c.kind === 'otobus') {
+      ctx.fillStyle = c.color; rr(x, y, w, h, 8); ctx.fill();
+      ctx.fillStyle = '#1a2230'; rr(x + 5, y + 5, w - 10, 12, 4); ctx.fill();
+      ctx.fillStyle = '#2d6cdf'; ctx.fillRect(x, y + 30, 4, h - 44); ctx.fillRect(x + w - 4, y + 30, 4, h - 44);
+      ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fillRect(x + 8, y + 26, w - 16, h - 40);
+      ctx.fillStyle = '#c9d1d9'; ctx.fillRect(x + 12, y + 50, w - 24, 10); ctx.fillRect(x + 12, y + 72, w - 24, 10);
+    } else {
+      var bodyG = ctx.createLinearGradient(x, 0, x + w, 0);
+      bodyG.addColorStop(0, shade(c.color, -.25)); bodyG.addColorStop(.5, shade(c.color, .12)); bodyG.addColorStop(1, shade(c.color, -.25));
+      ctx.fillStyle = bodyG; rr(x, y, w, h, c.kind === 'hatch' ? 9 : 8); ctx.fill();
+      var ws = c.kind === 'hatch' ? 13 : 15, roofY = y + ws + 6, roofH = h - ws - (c.kind === 'hatch' ? 18 : 24);
+      ctx.fillStyle = '#16202c'; rr(x + 4, y + 11, w - 8, ws - 2, 4); ctx.fill();          // ön cam
+      ctx.fillStyle = shade(c.color, -.08); rr(x + 5, roofY + 2, w - 10, roofH - 4, 4); ctx.fill();  // tavan
+      ctx.fillStyle = '#16202c'; rr(x + 5, y + h - (c.kind === 'hatch' ? 15 : 18), w - 10, 9, 3); ctx.fill(); // arka cam
+      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 7, y + 13, 5, ws - 6);
+      if (c.kind === 'taksi') {
+        ctx.fillStyle = '#1b1f24'; rr(x + 9, roofY + roofH / 2 - 5, w - 18, 10, 2); ctx.fill();
+        ctx.fillStyle = '#f2c618'; ctx.font = '700 6px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('TAKSİ', c.x, roofY + roofH / 2 + 2);
+      }
+      if (player) {  // Ömer: arka camdan baret görünüyor
+        ctx.fillStyle = '#16202c'; rr(x + 5, roofY + roofH - 18, w - 10, 14, 3); ctx.fill();
+        ctx.fillStyle = '#f4c49c'; ctx.beginPath(); ctx.arc(c.x - 5, roofY + roofH - 11, 5.5, 0, 7); ctx.fill();
+        ctx.fillStyle = '#f5c518'; ctx.beginPath(); ctx.arc(c.x - 5, roofY + roofH - 12, 5.6, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = '#d19a0c'; ctx.fillRect(c.x - 11.5, roofY + roofH - 12.5, 13, 2);
+        ctx.fillStyle = 'rgba(182,243,106,.9)'; ctx.fillRect(c.x - 1, y + h - 3, 2, 2); // küçük yeşil logo noktası
+      }
+      // aynalar
+      ctx.fillStyle = shade(c.color, -.3); ctx.fillRect(x - 3, y + 19, 4, 5); ctx.fillRect(x + w - 1, y + 19, 4, 5);
+    }
+    // farlar ve stoplar
+    ctx.fillStyle = '#fff6d0'; ctx.fillRect(x + 4, y + 1, 6, 3); ctx.fillRect(x + w - 10, y + 1, 6, 3);
+    var braking = player && keys.brake && state === 'play';
+    ctx.fillStyle = braking ? '#ff3b30' : '#a32020'; ctx.fillRect(x + 3, y + h - 3, 7, 3); ctx.fillRect(x + w - 10, y + h - 3, 7, 3);
+    // sinyal
+    if (c.blink > 0 && Math.floor(t * 6) % 2 === 0) {
+      ctx.fillStyle = '#ffb020'; var sx = c.target < c.lane ? x - 1 : x + w - 3;
+      ctx.fillRect(sx, y + 2, 4, 5); ctx.fillRect(sx, y + h - 7, 4, 5);
+    }
+    ctx.restore();
+  }
+  function drawGlows(list) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    list.forEach(function (c) {
+      var g = ctx.createRadialGradient(c.x, c.y - 10, 4, c.x, c.y - 50, 80);
+      g.addColorStop(0, 'rgba(255,240,190,.20)'); g.addColorStop(1, 'rgba(255,240,190,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(c.x - c.w / 2 + 4, c.y); ctx.lineTo(c.x - c.w / 2 - 22, c.y - 110); ctx.lineTo(c.x + c.w / 2 + 22, c.y - 110); ctx.lineTo(c.x + c.w / 2 - 4, c.y); ctx.closePath(); ctx.fill();
+      var red = ctx.createRadialGradient(c.x, c.y + c.h, 2, c.x, c.y + c.h, 26);
+      red.addColorStop(0, 'rgba(255,40,40,.22)'); red.addColorStop(1, 'rgba(255,40,40,0)');
+      ctx.fillStyle = red; ctx.fillRect(c.x - 30, c.y + c.h - 10, 60, 34);
+    });
+    ctx.restore();
+  }
+  function drawDeco(d) {
+    if (d.type === 'agac') {
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(d.tx + 4, d.y + 4, 14 * d.s, 0, 7); ctx.fill();
+      ctx.fillStyle = '#1f3a24'; ctx.beginPath(); ctx.arc(d.tx, d.y, 14 * d.s, 0, 7); ctx.fill();
+      ctx.fillStyle = '#28492c'; ctx.beginPath(); ctx.arc(d.tx - 3, d.y - 3, 9 * d.s, 0, 7); ctx.fill();
+    } else if (d.type === 'cali') {
+      ctx.fillStyle = '#223a26'; ctx.beginPath(); ctx.arc(d.tx, d.y, 7 * d.s, 0, 7); ctx.arc(d.tx + 7, d.y + 3, 6 * d.s, 0, 7); ctx.fill();
+    } else {
+      var lx = d.side ? ROAD_R + 8 : ROAD_L - 8;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      var g = ctx.createRadialGradient(lx + (d.side ? -16 : 16), d.y, 2, lx + (d.side ? -16 : 16), d.y, 46);
+      g.addColorStop(0, 'rgba(255,214,140,.22)'); g.addColorStop(1, 'rgba(255,214,140,0)');
+      ctx.fillStyle = g; ctx.fillRect(lx - 60, d.y - 50, 120, 100); ctx.restore();
+      ctx.fillStyle = '#3a414b'; ctx.fillRect(lx - 2, d.y - 2, 4, 4);
+      ctx.strokeStyle = '#3a414b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(lx, d.y); ctx.lineTo(lx + (d.side ? -16 : 16), d.y); ctx.stroke();
+      ctx.fillStyle = '#ffe2a0'; ctx.fillRect(lx + (d.side ? -19 : 13), d.y - 2, 6, 4);
+    }
+  }
+  function limitSign(x, y, n, r) {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#d92b2b'; ctx.lineWidth = r * .22; ctx.beginPath(); ctx.arc(x, y, r * .86, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 ' + Math.round(r * .82) + 'px Inter, sans-serif'; ctx.fillText(n, x, y + 1); ctx.textBaseline = 'alphabetic';
+  }
+  function drawRadar(r) {
+    var sx = ROAD_R + 26;
+    if (r.sign > -40 && r.sign < H + 40) {
+      ctx.fillStyle = '#5b636e'; ctx.fillRect(sx - 1.5, r.sign, 3, 18);
+      limitSign(sx, r.sign - 2, r.limit, 15);
+      ctx.fillStyle = '#1e5bd8'; rr(sx - 17, r.sign + 16, 34, 13, 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 7px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('RADAR', sx, r.sign + 25);
+    }
+    if (r.cam > -40 && r.cam < H + 40) {
+      var cx = ROAD_R + 18;
+      ctx.fillStyle = '#4a525d'; ctx.fillRect(cx - 2, r.cam - 4, 4, 20);
+      ctx.fillStyle = '#d8dde3'; rr(cx - 16, r.cam - 10, 22, 12, 2); ctx.fill();
+      ctx.fillStyle = '#1a2230'; ctx.beginPath(); ctx.arc(cx - 13, r.cam - 4, 3.2, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.setLineDash([4, 6]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ROAD_L, r.cam - 4); ctx.lineTo(ROAD_R, r.cam - 4); ctx.stroke(); ctx.setLineDash([]);
+      if (r.checked && flash > .6) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; var g = ctx.createRadialGradient(cx - 13, r.cam - 4, 1, cx - 13, r.cam - 4, 60); g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(cx - 80, r.cam - 70, 140, 130); ctx.restore(); }
+    }
+  }
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate((Math.random() - .5) * 12 * shake, (Math.random() - .5) * 12 * shake);
+    // çimen + banket
+    ctx.fillStyle = '#121a14'; ctx.fillRect(-10, -10, W + 20, H + 20);
+    ctx.fillStyle = '#1b1f24'; ctx.fillRect(ROAD_L - 14, 0, 14, H); ctx.fillRect(ROAD_R, 0, 14, H);
+    // asfalt
+    var ag = ctx.createLinearGradient(ROAD_L, 0, ROAD_R, 0); ag.addColorStop(0, '#24282f'); ag.addColorStop(.5, '#2b3038'); ag.addColorStop(1, '#24282f');
+    ctx.fillStyle = ag; ctx.fillRect(ROAD_L, 0, ROAD_R - ROAD_L, H);
+    ctx.fillStyle = '#e8e8e8'; ctx.fillRect(ROAD_L + 3, 0, 3, H); ctx.fillRect(ROAD_R - 6, 0, 3, H);
+    ctx.fillStyle = 'rgba(232,232,232,.75)';
+    for (var l = 1; l < LANES; l++) { var lx = ROAD_L + l * LW - 1.5; for (var y = -40 + dash; y < H; y += 40) ctx.fillRect(lx, y, 3, 20); }
+    deco.forEach(drawDeco);
+    radars.forEach(drawRadar);
+    var vis = traffic.filter(function (c) { return c.y < H + 10 && c.y + c.h > -10; });
+    vis.forEach(function (c) { drawVehicle(c, false); });
+    var me = { x: car.x, y: PY - 32, w: 34, h: 64, kind: 'sedan', color: '#f2f4f6', blink: 0 };
+    if (!(car.inv > 0 && Math.floor(t * 12) % 2 === 0)) {
+      ctx.save(); ctx.translate(car.x, PY); ctx.rotate(car.tilt); ctx.translate(-car.x, -PY);
+      drawVehicle(me, true); ctx.restore();
+    }
+    drawGlows(vis.concat([me]));
+    fx.forEach(function (p) { ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 2.5, 2.5); });
+    ctx.globalAlpha = 1;
+    texts.forEach(function (s) { ctx.globalAlpha = Math.max(0, Math.min(1, s.life * 1.5)); ctx.fillStyle = s.color; ctx.textAlign = 'center'; ctx.font = '800 ' + s.size + 'px Inter, sans-serif'; ctx.fillText(s.text, s.x, s.y); });
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // hız göstergesi ve radar uyarısı
+    if (state !== 'menu') {
+      var ar = activeRadar(), over = ar && car.speed > ar.limit + 3;
+      ctx.fillStyle = 'rgba(11,14,18,.78)'; rr(10, 10, 104, 46, 8); ctx.fill();
+      ctx.textAlign = 'left'; ctx.font = '700 26px "JetBrains Mono", monospace'; ctx.fillStyle = over ? '#ff6b5e' : '#f3f5f7';
+      ctx.fillText(Math.round(car.speed), 20, 42);
+      ctx.font = '600 10px "JetBrains Mono", monospace'; ctx.fillStyle = '#8b949e'; ctx.fillText('km/s', 76, 42);
+      ctx.fillStyle = 'rgba(11,14,18,.78)'; rr(W - 100, 10, 90, 30, 8); ctx.fill();
+      ctx.textAlign = 'right'; ctx.font = '600 13px "JetBrains Mono", monospace'; ctx.fillStyle = '#b6f36a'; ctx.fillText(km.toFixed(1) + ' km', W - 18, 30);
+      if (ar) {
+        limitSign(W / 2, 40, ar.limit, 24);
+        if (over && Math.floor(t * 4) % 2 === 0) { ctx.textAlign = 'center'; ctx.font = '800 13px Inter, sans-serif'; ctx.fillStyle = '#ff6b5e'; ctx.fillText('YAVAŞLA!', W / 2, 82); }
+      }
+      if (combo >= 2 && state === 'play') { ctx.textAlign = 'right'; ctx.font = '700 12px "JetBrains Mono", monospace'; ctx.fillStyle = '#f5c542'; ctx.fillText('MAKAS x' + combo, W - 14, 56); }
+      if (paused) { ctx.textAlign = 'center'; ctx.font = '700 26px Inter, sans-serif'; ctx.fillStyle = '#b6f36a'; ctx.fillText('Duraklatıldı', W / 2, 290); ctx.font = '500 13px Inter, sans-serif'; ctx.fillStyle = '#c9d1d9'; ctx.fillText('Devam etmek için P ya da dokun', W / 2, 314); }
+    }
+    if (flash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (flash * .55) + ')'; ctx.fillRect(0, 0, W, H); }
+  }
+  var last = performance.now();
+  function loop(now) { var dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); }
+
+  /* ---------- kontroller ---------- */
+  function toX(e) { var r = cv.getBoundingClientRect(); return (e.clientX - r.left) * W / r.width; }
+  var stage = $('stage'), touching = false;
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.overlay')) return;
+    if (paused) { paused = false; return; }
+    if (e.pointerType !== 'mouse') { touching = true; target = toX(e); e.preventDefault(); }
+  });
+  stage.addEventListener('pointermove', function (e) { if (!e.target.closest('.overlay') && touching) target = toX(e); });
+  ['pointerup', 'pointercancel'].forEach(function (n) { stage.addEventListener(n, function () { touching = false; target = null; }); });
+
+  function holdBtn(el, k) {
+    var on = function (e) { e.preventDefault(); keys[k] = true; el.classList.add('on'); if (paused) paused = false; };
+    var off = function () { keys[k] = false; el.classList.remove('on'); };
+    el.addEventListener('pointerdown', on); ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (n) { el.addEventListener(n, off); });
+    el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+  holdBtn($('leftBtn'), 'left'); holdBtn($('rightBtn'), 'right'); holdBtn($('brakeBtn'), 'brake');
+
+  var KEYS = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowDown: 'brake', KeyS: 'brake', ArrowUp: 'gas', KeyW: 'gas' };
+  window.addEventListener('keydown', function (e) {
+    if (Oyun.isTyping()) return;
+    if (KEYS[e.code]) { if (state === 'play') { e.preventDefault(); keys[KEYS[e.code]] = true; } return; }
+    if (e.code === 'KeyP' || e.code === 'Escape') { if (state === 'play') paused = !paused; return; }
+    if (e.code === 'Space') {
+      var el = document.activeElement;
+      if (state === 'play') { e.preventDefault(); if (paused) paused = false; else keys.brake = true; return; }
+      if (el && el.tagName === 'BUTTON') return;
+      if (state === 'menu' || !$('over').hidden) { e.preventDefault(); start(); }
+    }
+    if (e.code === 'Enter' && (state === 'menu' || !$('over').hidden)) { var a = document.activeElement; if (!a || a.tagName !== 'BUTTON') { e.preventDefault(); start(); } }
+  });
+  window.addEventListener('keyup', function (e) { if (KEYS[e.code]) keys[KEYS[e.code]] = false; if (e.code === 'Space') keys.brake = false; });
+  window.addEventListener('blur', function () { keys.left = keys.right = keys.brake = keys.gas = false; });
+  $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
+  document.addEventListener('visibilitychange', function () { if (document.hidden && state === 'play') paused = true; });
+  document.addEventListener('nickchange', function () { best = board.best(); hud(); });
+
+  if (/[?&]test\b/.test(location.search)) window.__makas = { get car() { return car; }, get traffic() { return traffic; }, get radars() { return radars; }, get state() { return state; }, get km() { return km; }, get stats() { return { score: score, lives: lives, fines: fines, makas: makasCount, level: level }; }, laneX: laneX, PY: PY };
+  reset(); state = 'menu';
+  board.refresh().then(function () { best = board.best(); hud(); });
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="muzik.js" defer></script>
+</body>
+</html>
