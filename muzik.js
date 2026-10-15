@@ -10,7 +10,9 @@
   if (window.__engilavMuzik) return;
   window.__engilavMuzik = true;
 
-  var SRC = 'muzik/engilav-ambient.mp3'; // projedeki yerel dosya (özgün, telifsiz)
+  // Projedeki yerel dosya (özgün, telifsiz). Önce muzik/ klasörüne, yoksa ana dizine bakılır.
+  var SOURCES = ['muzik/engilav-ambient.mp3', 'engilav-ambient.mp3'];
+  var srcIndex = 0;
   var VOLUME = 0.3;                       // hedef ses seviyesi (0–1), düşük başlar
   var FADE_MS = 1800;
   var KEY_STATE = 'engilav_muzik';        // 'on' | 'off'  (off = kullanıcı durdurdu)
@@ -89,7 +91,7 @@
   audio.muted = muted;
   audio.volume = 0;
   audio.setAttribute('playsinline', '');
-  audio.src = SRC;
+  audio.src = SOURCES[0];
 
   var playing = false, fadeTimer = null, waiting = false;
 
@@ -195,9 +197,18 @@
     if (wantOn && !document.hidden) play(false);
   }
   audio.addEventListener('error', function () {
+    // Bu yolda dosya yoksa sıradaki yolu dene
+    if (srcIndex < SOURCES.length - 1) {
+      srcIndex++;
+      playing = false;
+      audio.src = SOURCES[srcIndex];
+      audio.load();
+      if (wantOn && !document.hidden && (shown || waiting)) play(false);
+      return;
+    }
     failed = true; playing = false; waiting = false;
     box.hidden = true; removeGesture();
-    if (window.console) console.info('[ENGILAV müzik] "' + SRC + '" yüklenemedi; müzik kontrolü gizlendi.');
+    if (window.console) console.info('[ENGILAV müzik] Müzik dosyası bulunamadı (' + SOURCES.join(', ') + '); kontrol gizlendi.');
   });
   audio.addEventListener('pause', function () { if (playing && !audio.ended) { playing = false; render(); } });
 
