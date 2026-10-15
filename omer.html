@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ömer'in Cıvataları | ENGILAV</title>
+<meta name="description" content="Usta Ömer'le yukarıdan düşen cıvataları kasaya topla; çekiçten ve yağ damlasından kaç. Klavye, fare ve dokunmatik kontrollü ENGILAV mini oyunu.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="oyun.css">
+<style>
+  .stage{cursor:none}
+  .stage .overlay{cursor:auto}
+  .legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;text-align:left;margin:2px 0 4px;width:100%;max-width:320px}
+  .legend li{display:flex;align-items:center;gap:8px;list-style:none;font-size:.82rem;color:var(--muted)}
+  .legend li b{color:var(--text);font-weight:600}
+  .legend canvas{width:26px;height:26px;flex:none}
+  .lr{display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .lr button{height:62px;background:var(--panel);border:1px solid var(--line);border-radius:12px;font-size:1.5rem;color:var(--text);cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+  .lr button.on{border-color:var(--accent);color:var(--accent)}
+  @media (hover:none),(pointer:coarse){.lr{display:grid}}
+  .prow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;margin-bottom:10px}
+  .prow .player{margin-bottom:0}
+  .stats{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--muted)}
+</style>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="ortak.css">
+<style>.layout .main{max-width:420px}</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a href="index.html" class="brand" aria-label="ENGILAV — ana sayfa"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 4H35L32 11H13V16.5H24V23.5H13V29H32L35 36H11L4 29V11Z" fill="#b6f36a"/><circle cx="30" cy="20" r="3.5" fill="#b6f36a"/></svg><span class="wm"><b>ENGILAV</b><small>YAZILIM &amp; OTOMASYON</small></span></a>
+    <a href="index.html#oyunlar" class="back">← Tüm oyunlar</a>
+  </div>
+</header>
+
+<div class="game layout">
+<div class="main">
+  <div class="prow"><div class="player" id="player"></div><span id="muzik-yeri"></span></div>
+  <div class="hud">
+    <div>PUAN <b id="score">0</b></div>
+    <div>KOMBO <b id="combo">x1</b></div>
+    <div>CAN <b id="lives">♥♥♥</b></div>
+    <div>REKOR <b id="best">0</b></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="Ömer'in Cıvataları oyun alanı" role="img"></canvas>
+    <div class="overlay" id="menu">
+      <h1>Ömer'in <em>Cıvataları</em></h1>
+      <p>Usta Ömer'i sağa sola götür, yukarıdan düşen cıvataları kasaya topla. Cıvata ya da somun yere düşerse bir can gider.</p>
+      <ul class="legend" aria-label="Düşen parçalar">
+        <li><canvas data-item="civata" width="52" height="52"></canvas><span><b>Cıvata</b> +10</span></li>
+        <li><canvas data-item="somun" width="52" height="52"></canvas><span><b>Somun</b> +5</span></li>
+        <li><canvas data-item="altin" width="52" height="52"></canvas><span><b>Altın cıvata</b> +50</span></li>
+        <li><canvas data-item="kalp" width="52" height="52"></canvas><span><b>Kalp</b> +1 can</span></li>
+        <li><canvas data-item="yag" width="52" height="52"></canvas><span><b>Yağ</b> kaydırır</span></li>
+        <li><canvas data-item="cekic" width="52" height="52"></canvas><span><b>Çekiç</b> kaç!</span></li>
+      </ul>
+      <button class="btn" id="startBtn" type="button">Başla</button>
+    </div>
+    <div class="overlay" id="over" hidden>
+      <h2>Mesai <em>Bitti</em></h2>
+      <div class="big" id="final">0</div>
+      <p class="stats" id="stats"></p>
+      <p id="overMsg"></p>
+      <button class="btn" id="againBtn" type="button">Tekrar Oyna</button>
+    </div>
+  </div>
+  <div class="lr" aria-label="Hareket butonları">
+    <button type="button" id="leftBtn" aria-label="Sola git">◀</button>
+    <button type="button" id="rightBtn" aria-label="Sağa git">▶</button>
+  </div>
+  <p class="help">Hareket: <kbd>←</kbd> <kbd>→</kbd> ya da fareyi/parmağını kaydır · Duraklat: <kbd>P</kbd></p>
+</div>
+<aside class="side">
+  <section class="board"><h2>🏆 Skor tablosu <small id="boardNote"></small></h2><ol id="scoreList"></ol></section>
+</aside>
+</div>
+
+<script src="skor.js"></script>
+<script src="oyun-ortak.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var W = 400, H = 600, GROUND = 548, BEAM = 34, S = 0.82; // S: Ömer'in çizim ölçeği
+  var cv = $('c'), ctx = cv.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var TYPES = {
+    civata: { r: 11, pts: 10, good: true, miss: true },
+    somun:  { r: 10, pts: 5,  good: true, miss: true },
+    altin:  { r: 12, pts: 50, good: true, miss: false },
+    kalp:   { r: 11, pts: 0,  good: true, miss: false },
+    yag:    { r: 10, pts: 0,  good: false },
+    cekic:  { r: 15, pts: 0,  good: false }
+  };
+  var CRATE_HALF = 38 * S, CRATE_TOP = GROUND - 150 * S;
+
+  var state = 'menu', paused = false, t = 0, elapsed = 0, level = 1, spawnT = 0;
+  var omer, items, fx, texts, score = 0, best = 0, combo = 0, lives = 3, caught = 0, shake = 0, levelBanner = 0;
+  var keys = { left: false, right: false }, target = null;
+  var board = Oyun.board('omer', $('scoreList'), $('boardNote'));
+  Oyun.playerLine($('player'));
+
+  function mult() { return combo >= 15 ? 3 : combo >= 5 ? 2 : 1; }
+  function hearts() { var s = ''; for (var i = 0; i < lives; i++) s += '♥'; return s || '–'; }
+  function hud() {
+    $('score').textContent = score; $('best').textContent = best;
+    $('combo').textContent = 'x' + mult(); $('lives').textContent = hearts();
+  }
+  function reset() {
+    omer = { x: W / 2, vx: 0, walk: 0, happy: 0, stun: 0, slip: 0, sad: false, blink: 2, look: 0 };
+    items = []; fx = []; texts = []; score = 0; combo = 0; lives = 3; caught = 0; elapsed = 0; level = 1; spawnT = 0.6; shake = 0; levelBanner = 0;
+    hud();
+  }
+  function start() {
+    Oyun.requireNick().then(function () {
+      reset(); best = board.best(); hud(); state = 'play'; paused = false;
+      $('menu').hidden = true; $('over').hidden = true;
+    });
+  }
+  function gameOver() {
+    state = 'over'; omer.sad = true; omer.vx = 0;
+    $('final').textContent = score; $('overMsg').textContent = 'Skor kaydediliyor…';
+    $('stats').textContent = 'Toplanan parça: ' + caught + ' · Seviye: ' + level;
+    best = Math.max(best, score); hud();
+    setTimeout(function () { $('over').hidden = false; $('againBtn').focus(); }, 900);
+    board.submit(score).then(function (r) { $('overMsg').textContent = r.msg; best = r.best; hud(); });
+  }
+
+  /* ---------- parça üretimi ---------- */
+  function pick() {
+    var w = { civata: 60, somun: 26, altin: 4, kalp: lives < 5 ? 1.6 : 0, yag: 4 + level * 1.2, cekic: 2 + level * 1.4 };
+    var sum = 0, k; for (k in w) sum += w[k];
+    var r = Math.random() * sum;
+    for (k in w) { r -= w[k]; if (r <= 0) return k; }
+    return 'civata';
+  }
+  function spawn() {
+    var type = pick(), r = TYPES[type].r;
+    var base = Math.min(430, 130 + (level - 1) * 24);
+    items.push({ type: type, x: 24 + Math.random() * (W - 48), y: BEAM - r, py: BEAM - r, vy: base * (0.85 + Math.random() * 0.3),
+      rot: Math.random() * 6, vr: (Math.random() - .5) * 6, sway: Math.random() * 6 });
+  }
+
+  /* ---------- efektler ---------- */
+  function burst(x, y, color, n, speed) {
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * Math.PI * 2, v = speed * (0.4 + Math.random() * 0.8);
+      fx.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - speed * .4, life: .5 + Math.random() * .3, max: .8, color: color, s: 2 + Math.random() * 2 });
+    }
+  }
+  function say(x, y, text, color, size) { texts.push({ x: x, y: y, text: text, color: color, life: 1, size: size || 18 }); }
+
+  /* ---------- güncelleme ---------- */
+  function update(dt) {
+    t += dt;
+    omer.blink -= dt; if (omer.blink < -0.12) omer.blink = 2 + Math.random() * 3;
+    fx.forEach(function (p) { p.vy += 600 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
+    fx = fx.filter(function (p) { return p.life > 0; });
+    texts.forEach(function (s) { s.y -= 40 * dt; s.life -= dt * 0.9; });
+    texts = texts.filter(function (s) { return s.life > 0; });
+    if (state === 'menu') { omer.x = W / 2 + Math.sin(t * 0.9) * 90; omer.vx = Math.cos(t * 0.9) * 81; omer.walk += Math.abs(omer.vx) * dt * 0.06; return; }
+    if (paused || state !== 'play') { shake = Math.max(0, shake - dt); return; }
+
+    elapsed += dt;
+    var lv = 1 + Math.floor(elapsed / 18);
+    if (lv > level) { level = lv; levelBanner = 1.6; say(W / 2, 230, 'Seviye ' + level + '!', '#b6f36a', 26); }
+    levelBanner = Math.max(0, levelBanner - dt);
+    shake = Math.max(0, shake - dt);
+    omer.happy = Math.max(0, omer.happy - dt);
+    omer.stun = Math.max(0, omer.stun - dt);
+    omer.slip = Math.max(0, omer.slip - dt);
+
+    // hareket
+    var MAX = 420 + level * 8, desired = 0;
+    if (keys.left || keys.right) { target = null; desired = (keys.right ? 1 : 0) - (keys.left ? 1 : 0); desired *= MAX; }
+    else if (target !== null) { desired = Math.max(-MAX * 1.3, Math.min(MAX * 1.3, (target - omer.x) * 9)); }
+    if (omer.stun > 0) desired = 0;
+    var resp = omer.slip > 0 ? 1.6 : 14;              // yağdayken tepki yavaş, kayar
+    omer.vx += (desired - omer.vx) * Math.min(1, dt * resp);
+    if (omer.slip > 0) omer.vx += Math.sin(t * 9) * 260 * dt;
+    omer.x += omer.vx * dt;
+    if (omer.x < 42) { omer.x = 42; omer.vx = 0; } if (omer.x > W - 42) { omer.x = W - 42; omer.vx = 0; }
+    omer.walk += Math.abs(omer.vx) * dt * 0.06;
+    omer.look += ((omer.vx / MAX) * 3 - omer.look) * Math.min(1, dt * 10);
+
+    // üretim
+    spawnT -= dt;
+    if (spawnT <= 0) { spawn(); spawnT = Math.max(0.34, 1.15 - (level - 1) * 0.09) * (0.75 + Math.random() * 0.5); }
+
+    // düşen parçalar
+    for (var i = items.length - 1; i >= 0; i--) {
+      var it = items[i], ty = TYPES[it.type];
+      it.py = it.y; it.y += it.vy * dt; it.rot += it.vr * dt;
+      if (it.type === 'yag' || it.type === 'kalp') it.x += Math.sin(t * 3 + it.sway) * 18 * dt;
+      // kasaya düştü mü?
+      if (it.y + ty.r >= CRATE_TOP && it.py + ty.r < CRATE_TOP + 10 && Math.abs(it.x - omer.x) <= CRATE_HALF + ty.r * 0.4 && omer.stun <= 0.3) {
+        catchItem(it); items.splice(i, 1); continue;
+      }
+      if (it.y - ty.r > GROUND) {
+        if (ty.miss) {
+          lives--; combo = 0; hud();
+          say(it.x, GROUND - 20, 'Kaçtı!', '#ff6b5e', 16); burst(it.x, GROUND - 4, '#8b949e', 6, 120);
+          if (lives <= 0) { items.splice(i, 1); return gameOver(); }
+        }
+        items.splice(i, 1);
+      }
+    }
+  }
+  function catchItem(it) {
+    var x = it.x, y = CRATE_TOP;
+    if (it.type === 'cekic') {
+      lives--; combo = 0; omer.stun = 1; shake = .35; hud();
+      say(x, y - 20, 'Bonk!', '#ff6b5e', 22); burst(x, y, '#ffd27a', 10, 180);
+      if (lives <= 0) gameOver();
+      return;
+    }
+    if (it.type === 'yag') {
+      combo = 0; omer.slip = 2.2; hud();
+      say(x, y - 20, 'Kaygan!', '#9aa7ff', 18); burst(x, y, '#2a2f3a', 10, 140);
+      return;
+    }
+    if (it.type === 'kalp') {
+      lives = Math.min(5, lives + 1); omer.happy = .6; hud();
+      say(x, y - 20, '+1 ♥', '#ff6b8a', 20); burst(x, y, '#ff6b8a', 12, 160);
+      return;
+    }
+    combo++; caught++;
+    var m = mult(), pts = TYPES[it.type].pts * m;
+    score += pts; omer.happy = .45; hud();
+    say(x, y - 18, '+' + pts + (m > 1 ? '  x' + m : ''), it.type === 'altin' ? '#f5c542' : '#b6f36a', it.type === 'altin' ? 22 : 17);
+    burst(x, y, it.type === 'altin' ? '#f5c542' : '#b6f36a', it.type === 'altin' ? 16 : 7, 150);
+    if (combo === 5 || combo === 15) say(W / 2, 200, 'Kombo x' + m + '!', '#b6f36a', 24);
+  }
+
+  /* ---------- çizim: parçalar ---------- */
+  function hexPath(r) { ctx.beginPath(); for (var i = 0; i < 6; i++) { var a = Math.PI / 6 + i * Math.PI / 3; ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); }
+  function drawItem(type, x, y, rot, c) {
+    c = c || ctx; var old = ctx; ctx = c;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0);
+    if (type === 'civata' || type === 'altin') {
+      var gold = type === 'altin';
+      if (gold) { ctx.shadowColor = 'rgba(245,197,66,.8)'; ctx.shadowBlur = 14; }
+      var g = ctx.createLinearGradient(-4, 0, 4, 0);
+      g.addColorStop(0, gold ? '#b8860b' : '#6b7480'); g.addColorStop(.5, gold ? '#ffe28a' : '#d5dbe2'); g.addColorStop(1, gold ? '#a07408' : '#5b636e');
+      ctx.fillStyle = g; ctx.fillRect(-3.5, -2, 7, 17);                   // gövde
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = gold ? 'rgba(120,80,0,.6)' : 'rgba(40,46,54,.6)'; ctx.lineWidth = 1;
+      for (var k = 1; k < 6; k++) { ctx.beginPath(); ctx.moveTo(-3.5, k * 3); ctx.lineTo(3.5, k * 3 - 1.5); ctx.stroke(); } // diş
+      ctx.save(); ctx.translate(0, -5); hexPath(8);                        // altıgen baş
+      var hg = ctx.createLinearGradient(-8, -6, 8, 6); hg.addColorStop(0, gold ? '#ffe9a6' : '#e8edf2'); hg.addColorStop(1, gold ? '#c99a10' : '#7c8591');
+      ctx.fillStyle = hg; ctx.fill(); ctx.strokeStyle = gold ? '#8a6508' : '#4a525d'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore();
+    } else if (type === 'somun') {
+      hexPath(10);
+      var ng = ctx.createLinearGradient(-10, -10, 10, 10); ng.addColorStop(0, '#e2e7ec'); ng.addColorStop(1, '#6d7682');
+      ctx.fillStyle = ng; ctx.fill(); ctx.strokeStyle = '#4a525d'; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 4.2, 0, 7); ctx.fillStyle = '#1b2128'; ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 0, 4.2, 0, 7); ctx.strokeStyle = '#9aa3ad'; ctx.lineWidth = 1; ctx.stroke();
+    } else if (type === 'yag') {
+      ctx.rotate(-(rot || 0));
+      ctx.beginPath(); ctx.moveTo(0, -12); ctx.bezierCurveTo(7, -3, 9, 2, 9, 5); ctx.arc(0, 5, 9, 0, Math.PI); ctx.bezierCurveTo(-9, 2, -7, -3, 0, -12); ctx.closePath();
+      var og = ctx.createLinearGradient(-9, -12, 9, 14); og.addColorStop(0, '#3a3550'); og.addColorStop(1, '#0d0f14');
+      ctx.fillStyle = og; ctx.fill(); ctx.strokeStyle = 'rgba(154,167,255,.55)'; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = 'rgba(200,210,255,.55)'; ctx.beginPath(); ctx.ellipse(-3, 3, 2, 3.5, -.4, 0, 7); ctx.fill();
+    } else if (type === 'cekic') {
+      ctx.shadowColor = 'rgba(255,90,80,.55)'; ctx.shadowBlur = 12;
+      ctx.fillStyle = '#9a6a3a'; ctx.fillRect(-2.6, -6, 5.2, 22);                 // sap
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#7a5229'; ctx.fillRect(-2.6, 10, 5.2, 6);
+      var hh = ctx.createLinearGradient(0, -14, 0, -4); hh.addColorStop(0, '#c9d1d9'); hh.addColorStop(1, '#5b636e');
+      ctx.fillStyle = hh; ctx.beginPath(); ctx.moveTo(-13, -14); ctx.lineTo(9, -14); ctx.lineTo(13, -11); ctx.lineTo(13, -7); ctx.lineTo(9, -4); ctx.lineTo(-13, -4); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#3a414b'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,107,94,.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, 17, 0, 7); ctx.stroke();
+    } else if (type === 'kalp') {
+      ctx.rotate(-(rot || 0));
+      ctx.shadowColor = 'rgba(255,93,108,.7)'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.moveTo(0, 9); ctx.bezierCurveTo(-14, -1, -9, -13, 0, -5); ctx.bezierCurveTo(9, -13, 14, -1, 0, 9); ctx.closePath();
+      ctx.fillStyle = '#ff5d6c'; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(-4.5, -4, 2, 3, -.6, 0, 7); ctx.fill();
+    }
+    ctx.restore(); ctx = old;
+  }
+
+  /* ---------- çizim: Ömer ---------- */
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function drawOmer() {
+    var o = omer, moving = Math.abs(o.vx) > 20, ph = o.walk;
+    ctx.save(); ctx.translate(o.x, GROUND);
+    // gölge
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(0, 2, 40 * S, 6, 0, 0, 7); ctx.fill();
+    var tilt = o.slip > 0 ? Math.sin(t * 12) * .14 : (o.stun > 0 ? Math.sin(t * 20) * .05 : o.vx / 420 * .07);
+    ctx.rotate(tilt); ctx.scale(S, S);
+    var bob = moving ? Math.abs(Math.sin(ph)) * 3 : Math.sin(t * 2.4) * 1;
+    var squash = 1 + (moving ? Math.abs(Math.cos(ph)) * 0.025 : Math.sin(t * 2.4) * 0.012);
+
+    // bacaklar + ayakkabılar
+    [-1, 1].forEach(function (side) {
+      var lift = moving ? Math.max(0, Math.sin(ph) * side) * 6 : 0;
+      ctx.fillStyle = '#2b4a74'; rr(side * 14 - 9, -30 - lift, 18, 26, 6); ctx.fill();
+      ctx.fillStyle = '#3a3f47'; rr(side * 14 - 12 + side * 2, -10 - lift, 24, 11, 5); ctx.fill();
+      ctx.fillStyle = '#1e2228'; ctx.fillRect(side * 14 - 12 + side * 2, -2 - lift, 24, 3);
+    });
+
+    ctx.save(); ctx.translate(0, -bob);
+    // kollar (kasayı başının üstünde tutuyor)
+    var lift2 = o.happy > 0 ? 4 : 0;
+    [-1, 1].forEach(function (side) {
+      ctx.strokeStyle = '#ef8a3c'; ctx.lineWidth = 13; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(side * 30, -68); ctx.quadraticCurveTo(side * 50, -100, side * 33, -128 - lift2); ctx.stroke();
+    });
+    // gövde: tombul karın
+    ctx.save(); ctx.translate(0, -48); ctx.scale(1, squash);
+    ctx.beginPath(); ctx.ellipse(0, 0, 40, 35, 0, 0, 7); ctx.fillStyle = '#ef8a3c'; ctx.fill();
+    ctx.save(); ctx.clip();
+    ctx.fillStyle = '#2f5585'; ctx.fillRect(-44, -2, 88, 42);                 // tulum
+    ctx.fillRect(-14, -20, 28, 20);                                            // ön cep (göğüslük)
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(-8, -12, 16, 8);
+    ctx.restore();
+    ctx.strokeStyle = '#2f5585'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-12, -20); ctx.lineTo(-20, -30); ctx.moveTo(12, -20); ctx.lineTo(20, -30); ctx.stroke();
+    ctx.fillStyle = '#b6f36a'; ctx.beginPath(); ctx.arc(-11, -17, 2.4, 0, 7); ctx.arc(11, -17, 2.4, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.13)'; ctx.beginPath(); ctx.ellipse(-15, -12, 10, 14, -.4, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.arc(0, 14, 1.8, 0, 7); ctx.fill(); // göbek
+    ctx.restore();
+
+    // kafa
+    var hx = 0, hy = -95;
+    ctx.fillStyle = '#5a3a22'; ctx.beginPath(); ctx.ellipse(hx - 19, hy - 2, 5, 7, 0, 0, 7); ctx.ellipse(hx + 19, hy - 2, 5, 7, 0, 0, 7); ctx.fill(); // saç
+    ctx.fillStyle = '#f4c49c'; ctx.beginPath(); ctx.ellipse(hx, hy, 22, 21, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#f4c49c'; ctx.beginPath(); ctx.arc(hx - 22, hy + 1, 4.5, 0, 7); ctx.arc(hx + 22, hy + 1, 4.5, 0, 7); ctx.fill();             // kulak
+    ctx.fillStyle = 'rgba(240,120,110,.45)'; ctx.beginPath(); ctx.arc(hx - 12, hy + 7, 5.5, 0, 7); ctx.arc(hx + 12, hy + 7, 5.5, 0, 7); ctx.fill(); // yanak
+    var lx = o.look;
+    ctx.fillStyle = '#20242a'; ctx.strokeStyle = '#20242a'; ctx.lineCap = 'round';
+    if (o.stun > 0) {
+      ctx.lineWidth = 2;
+      [-7, 7].forEach(function (ex) { ctx.beginPath(); ctx.moveTo(hx + ex - 3, hy - 3); ctx.lineTo(hx + ex + 3, hy + 3); ctx.moveTo(hx + ex + 3, hy - 3); ctx.lineTo(hx + ex - 3, hy + 3); ctx.stroke(); });
+    } else if (o.blink < 0) {
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx - 10 + lx, hy); ctx.lineTo(hx - 4 + lx, hy); ctx.moveTo(hx + 4 + lx, hy); ctx.lineTo(hx + 10 + lx, hy); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.arc(hx - 7 + lx, hy - 1, 2.8, 0, 7); ctx.arc(hx + 7 + lx, hy - 1, 2.8, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(hx - 6 + lx, hy - 2, 1, 0, 7); ctx.arc(hx + 8 + lx, hy - 2, 1, 0, 7); ctx.fill();
+    }
+    // kaşlar
+    ctx.strokeStyle = '#5a3a22'; ctx.lineWidth = 2;
+    var brow = o.sad ? 2 : (o.happy > 0 ? -2 : 0);
+    ctx.beginPath(); ctx.moveTo(hx - 11, hy - 8 + (o.sad ? -2 : 0)); ctx.lineTo(hx - 4, hy - 9 + brow); ctx.moveTo(hx + 4, hy - 9 + brow); ctx.lineTo(hx + 11, hy - 8 + (o.sad ? -2 : 0)); ctx.stroke();
+    // ağız
+    ctx.lineWidth = 2; ctx.strokeStyle = '#7a3b2e';
+    if (o.happy > 0) {
+      ctx.fillStyle = '#7a2e26'; ctx.beginPath(); ctx.arc(hx, hy + 8, 6, 0, Math.PI); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ff8f8f'; ctx.beginPath(); ctx.arc(hx, hy + 11.5, 2.6, 0, Math.PI); ctx.fill();
+    } else if (o.slip > 0) {
+      ctx.fillStyle = '#7a2e26'; ctx.beginPath(); ctx.ellipse(hx, hy + 10, 3, 4, 0, 0, 7); ctx.fill();
+    } else if (o.stun > 0 || o.sad) {
+      ctx.beginPath(); ctx.arc(hx, hy + 14, 5, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.arc(hx, hy + 6, 5.5, Math.PI * .15, Math.PI * .85); ctx.stroke();
+    }
+    // baret
+    var hg = ctx.createLinearGradient(0, hy - 34, 0, hy - 8); hg.addColorStop(0, '#ffd84a'); hg.addColorStop(1, '#e0a812');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(hx, hy - 9, 22, Math.PI, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#d19a0c'; rr(hx - 27, hy - 11, 54, 6, 3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(hx - 9, hy - 22, 6, 3.5, -.5, 0, 7); ctx.fill();
+    ctx.fillStyle = '#c48f0b'; ctx.fillRect(hx - 2.5, hy - 31, 5, 20);
+
+    // kasa (başının üstünde)
+    var cy = -150 - lift2;
+    var cg = ctx.createLinearGradient(0, cy, 0, cy + 24); cg.addColorStop(0, '#6c7682'); cg.addColorStop(1, '#3d454f');
+    // içindeki parçalar
+    var pile = Math.min(caught, 9);
+    for (var p = 0; p < pile; p++) {
+      var px = -28 + (p * 23) % 56, py = cy + 2 - (p > 4 ? 6 : 0);
+      if (p % 2) drawItem('somun', px, py, p, ctx);
+      else drawItem('civata', px, py + 2, 1.57 + p * .3, ctx);
+    }
+    ctx.fillStyle = cg; rr(-38, cy, 76, 24, 4); ctx.fill();
+    ctx.fillStyle = '#b6f36a'; ctx.fillRect(-38, cy + 9, 76, 4);
+    ctx.fillStyle = '#2a3038'; ctx.fillRect(-38, cy, 76, 3);
+    ctx.fillStyle = '#a9b2bf'; [-31, 31].forEach(function (rx) { ctx.beginPath(); ctx.arc(rx, cy + 18, 1.6, 0, 7); ctx.fill(); });
+    // eller
+    ctx.fillStyle = '#f4c49c'; ctx.beginPath(); ctx.arc(-35, cy + 22, 6.5, 0, 7); ctx.arc(35, cy + 22, 6.5, 0, 7); ctx.fill();
+
+    // sersemleme yıldızları
+    if (o.stun > 0) {
+      for (var s = 0; s < 3; s++) {
+        var a = t * 6 + s * 2.1;
+        star(Math.cos(a) * 26, hy - 26 + Math.sin(a) * 6, 4.5);
+      }
+    }
+    ctx.restore(); ctx.restore();
+  }
+  function star(x, y, r) {
+    ctx.fillStyle = '#ffd84a'; ctx.beginPath();
+    for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r * .45 : r; ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * rad, y + Math.sin(a) * rad); }
+    ctx.closePath(); ctx.fill();
+  }
+
+  /* ---------- çizim: atölye ---------- */
+  function drawBg() {
+    var g = ctx.createLinearGradient(0, 0, 0, GROUND); g.addColorStop(0, '#0d1117'); g.addColorStop(1, '#151b22');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(42,49,60,.4)'; ctx.lineWidth = 1;
+    for (var x = 0; x <= W; x += 50) { ctx.beginPath(); ctx.moveTo(x + .5, BEAM); ctx.lineTo(x + .5, GROUND); ctx.stroke(); }
+    // pencere
+    ctx.fillStyle = '#111821'; rr(250, 90, 110, 80, 4); ctx.fill();
+    ctx.strokeStyle = '#222b36'; ctx.lineWidth = 3; ctx.strokeRect(250, 90, 110, 80);
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(305, 90); ctx.lineTo(305, 170); ctx.moveTo(250, 130); ctx.lineTo(360, 130); ctx.stroke();
+    ctx.fillStyle = 'rgba(182,243,106,.05)'; ctx.fillRect(252, 92, 51, 36);
+    // raf ve kutular
+    ctx.fillStyle = '#1a212a'; ctx.fillRect(30, 300, 140, 6); ctx.fillRect(30, 380, 140, 6);
+    ctx.fillStyle = '#20282f'; [[40, 270, 34, 30], [80, 280, 26, 20], [116, 266, 40, 34], [44, 352, 46, 28], [98, 358, 30, 22]].forEach(function (b) { ctx.fillRect(b[0], b[1], b[2], b[3]); });
+    // duvar yazısı
+    ctx.save(); ctx.globalAlpha = .07; ctx.fillStyle = '#b6f36a'; ctx.font = '800 34px Inter, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('ENGILAV', 300, 260); ctx.font = '600 12px "JetBrains Mono", monospace'; ctx.fillText('ATÖLYE', 300, 280); ctx.restore();
+    // tavandaki taşıyıcı
+    ctx.fillStyle = '#1f262f'; ctx.fillRect(0, 0, W, BEAM);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, BEAM - 8, W, 8); ctx.clip();
+    for (var sx = -20 + (t * 30) % 20; sx < W + 20; sx += 20) { ctx.fillStyle = '#f5a524'; ctx.beginPath(); ctx.moveTo(sx, BEAM); ctx.lineTo(sx + 10, BEAM); ctx.lineTo(sx + 18, BEAM - 8); ctx.lineTo(sx + 8, BEAM - 8); ctx.fill(); }
+    ctx.restore();
+    ctx.fillStyle = '#2d3540'; for (var rx = (t * 40) % 26 - 26; rx < W; rx += 26) { ctx.beginPath(); ctx.arc(rx, 13, 6, 0, 7); ctx.fill(); }
+    ctx.fillStyle = '#0d1117'; for (var rx2 = (t * 40) % 26 - 26; rx2 < W; rx2 += 26) { ctx.beginPath(); ctx.arc(rx2, 13, 2, 0, 7); ctx.fill(); }
+    // zemin
+    ctx.fillStyle = '#161b22'; ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = '#2a313c'; ctx.fillRect(0, GROUND, W, 3);
+    ctx.fillStyle = 'rgba(245,165,36,.7)'; for (var fx2 = 0; fx2 < W; fx2 += 30) ctx.fillRect(fx2, GROUND + 18, 18, 4);
+  }
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate((Math.random() - .5) * 10 * shake, (Math.random() - .5) * 10 * shake);
+    drawBg();
+    items.forEach(function (it) { drawItem(it.type, it.x, it.y, it.type === 'civata' || it.type === 'altin' || it.type === 'cekic' || it.type === 'somun' ? it.rot : 0); });
+    drawOmer();
+    fx.forEach(function (p) { ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.s, p.s); });
+    ctx.globalAlpha = 1;
+    texts.forEach(function (s) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, s.life * 1.6)); ctx.fillStyle = s.color; ctx.textAlign = 'center';
+      ctx.font = '800 ' + s.size + 'px Inter, sans-serif'; ctx.fillText(s.text, s.x, s.y);
+    });
+    ctx.globalAlpha = 1;
+    if (state === 'play') {
+      ctx.textAlign = 'left'; ctx.font = '600 12px "JetBrains Mono", monospace'; ctx.fillStyle = '#8b949e';
+      ctx.fillText('SEVİYE ' + level, 12, BEAM + 20);
+      ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(230,237,243,.9)'; ctx.font = '700 30px "JetBrains Mono", monospace';
+      ctx.fillText(score, W - 12, BEAM + 34);
+      if (paused) { ctx.textAlign = 'center'; ctx.font = '700 26px Inter, sans-serif'; ctx.fillStyle = '#b6f36a'; ctx.fillText('Duraklatıldı', W / 2, 300); ctx.font = '500 13px Inter, sans-serif'; ctx.fillStyle = '#8b949e'; ctx.fillText('Devam etmek için P ya da dokun', W / 2, 326); }
+    }
+    ctx.restore();
+  }
+  var last = performance.now();
+  function loop(now) { var dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); }
+
+  /* ---------- kontroller ---------- */
+  function toX(e) { var r = cv.getBoundingClientRect(); return (e.clientX - r.left) * W / r.width; }
+  var stage = $('stage'), touching = false;
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.overlay')) return;
+    if (paused) { paused = false; return; }
+    if (e.pointerType !== 'mouse') { touching = true; target = toX(e); e.preventDefault(); }
+  });
+  stage.addEventListener('pointermove', function (e) {
+    if (e.target.closest('.overlay')) return;
+    if (e.pointerType === 'mouse' || touching) target = toX(e);
+  });
+  ['pointerup', 'pointercancel'].forEach(function (n) { stage.addEventListener(n, function (e) { if (e.pointerType !== 'mouse') { touching = false; target = null; } }); });
+  stage.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') target = null; });
+
+  function holdBtn(el, dir) {
+    var on = function (e) { e.preventDefault(); keys[dir] = true; el.classList.add('on'); if (paused) paused = false; };
+    var off = function () { keys[dir] = false; el.classList.remove('on'); };
+    el.addEventListener('pointerdown', on); ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (n) { el.addEventListener(n, off); });
+    el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+  holdBtn($('leftBtn'), 'left'); holdBtn($('rightBtn'), 'right');
+
+  var KEYS = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
+  window.addEventListener('keydown', function (e) {
+    if (Oyun.isTyping()) return;
+    if (KEYS[e.code]) { if (state === 'play') { e.preventDefault(); keys[KEYS[e.code]] = true; } return; }
+    if (e.code === 'KeyP' || e.code === 'Escape') { if (state === 'play') paused = !paused; return; }
+    if (e.code === 'Space' || e.code === 'Enter') {
+      var el = document.activeElement; if (el && el.tagName === 'BUTTON') return;
+      if (state === 'play') { e.preventDefault(); if (paused) paused = false; return; }
+      if (state === 'menu' || !$('over').hidden) { e.preventDefault(); start(); }
+    }
+  });
+  window.addEventListener('keyup', function (e) { if (KEYS[e.code]) keys[KEYS[e.code]] = false; });
+  window.addEventListener('blur', function () { keys.left = keys.right = false; });
+  $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
+  document.addEventListener('visibilitychange', function () { if (document.hidden && state === 'play') paused = true; });
+  document.addEventListener('nickchange', function () { best = board.best(); hud(); });
+
+  // menüdeki parça simgeleri
+  document.querySelectorAll('.legend canvas').forEach(function (c) {
+    var k = c.getContext('2d'); k.scale(1.4, 1.4); drawItem(c.getAttribute('data-item'), 18.5, 18.5, c.getAttribute('data-item') === 'civata' || c.getAttribute('data-item') === 'altin' ? .5 : 0, k);
+  });
+
+  if (/[?&]test\b/.test(location.search)) window.__omer = { get items() { return items; }, get omer() { return omer; }, get state() { return state; }, get level() { return level; }, get lives() { return lives; }, W: W };
+  reset(); state = 'menu';
+  board.refresh().then(function () { best = board.best(); hud(); });
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="muzik.js" defer></script>
+</body>
+</html>

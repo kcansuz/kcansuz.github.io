@@ -46,6 +46,8 @@
     '.em-play:hover{background:#b6f36a;border-color:#b6f36a;color:#0b0e12}' +
     '.em-player.em-wait .em-play{animation:em-pulse 2.2s ease-out infinite}' +
     '@keyframes em-pulse{0%{box-shadow:0 0 0 0 rgba(182,243,106,.45)}70%{box-shadow:0 0 0 10px rgba(182,243,106,0)}100%{box-shadow:0 0 0 0 rgba(182,243,106,0)}}' +
+    '.em-player.em-inline{position:static;padding:3px;box-shadow:none;background:#161b22;border-color:#2a313c}' +
+    '.em-player.em-inline .em-btn{width:32px;height:32px}.em-player.em-inline .em-btn svg{width:16px;height:16px}' +
     '.em-spacer{height:0}' +
     '@media (max-width:600px){.em-btn{width:36px;height:36px}.em-eq{padding:0 6px 0 8px}.em-spacer{height:72px}}' +
     '@media (prefers-reduced-motion:reduce){.em-player.em-on .em-eq i{animation:none;height:9px}.em-player.em-wait .em-play{animation:none}}';
@@ -73,6 +75,9 @@
   var btnMute = box.querySelector('.em-mute');
 
   function mount() {
+    // Sayfada <span id="muzik-yeri"> varsa kontrol oraya yerleşir (oyun butonlarıyla çakışmasın diye)
+    var slot = document.getElementById('muzik-yeri');
+    if (slot) { box.classList.add('em-inline'); slot.appendChild(box); setTimeout(start, 0); return; }
     document.body.appendChild(box);
     setTimeout(start, 0);
     // Oyun ve hesaplama sayfalarında telefonda alttaki içerik kontrolün altında kalmasın
